@@ -40,9 +40,8 @@ This section explains everything you can find inside *"settings"* window.
 You must press *"Accept Changes"* button to save settings.
 ### Conversion mode
 This will define the way of saving.
-Terms:
-*MISSION FOLDER* - unpacked mission. (Folder with mission.sqm)
-*MISSION PBO* - packed mission. (File in PBO format)
+- *MISSION FOLDER* - unpacked mission. (Folder with mission.sqm)
+- *MISSION PBO* - packed mission. (File in PBO format)
  1. Rewrite existing folders (**NOT RECOMMENDED**)
  
  *MISSION FOLDERS* **themselves** will be converted to revive. (Basically, it changes original folder, while other options don't)

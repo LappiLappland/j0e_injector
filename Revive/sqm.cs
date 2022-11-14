@@ -115,7 +115,7 @@ namespace Revive_Injector
             }
         }
 
-        private void AddonsAndAuto() // Because we use flats from Nogova
+        private void AddonsAndAuto() // Because we use houses from Nogova
         {
 
             if (Text.Contains("\"bis_resistance\"")) return;
@@ -184,7 +184,8 @@ namespace Revive_Injector
                         int endPos = Text.IndexOf("\";", startPos);
                         string name = Text.Substring(startPos, endPos - startPos);
 
-                        //If unit has same name as some other one
+                        //If unit has same name as some other one,
+                        //We change it
                         //Very rare, but it does exist on some missions
                         if (PlayersName.Contains(name))
                         {
@@ -247,7 +248,7 @@ namespace Revive_Injector
                 Text = Text.Insert(classCloseIndex, classCode + "\t");
 
             }
-            //Well, i guess we create it ourselves
+            //Class doesn't exist, we create it ourselves
             else
             {
                 string classCode = "";
@@ -319,8 +320,8 @@ namespace Revive_Injector
 
                 int classPos = Text.IndexOf($"name=\"{markerName}\";", classStartIndex, classCloseIndex - classStartIndex, StringComparison.OrdinalIgnoreCase);
 
-                //It already exists, how convenient
-                //Let's just edit it then ! :)
+                //Marker exists
+                //We just edit it then
                 if (classPos != -1)
                 {
                     int classStart = Text.LastIndexOf("class Item", classPos);
@@ -372,8 +373,8 @@ namespace Revive_Injector
                     }
 
                 }
-                //What a bummer
-                //We must create it ourselves :(
+                //No respawn markers
+                //We must create them
                 else
                 {
                     classCode += $"\t\tclass Item{numberOfItems}\n";
@@ -398,8 +399,8 @@ namespace Revive_Injector
 
                 char[] additional = new char[] { 'D', 'G', 'C' };
 
-                //It already exists, how convenient
-                //Let's just edit it then ! :)
+                //Player marker exists
+                //We just edit it then
                 if (classPos != -1)
                 {
                     int classStart = Text.LastIndexOf("class Item", classPos);
@@ -485,8 +486,8 @@ namespace Revive_Injector
 
 
                 }
-                //What a bummer
-                //We must create it ourselves :(
+                //No player marker
+                //We must create it ourselves
                 else
                 {
                     classCode += $"\t\tclass Item{numberOfItems}\n";
@@ -603,7 +604,7 @@ namespace Revive_Injector
 
             string classCode = "";
 
-            //Doesn't exit ? We create it !
+            //No class Seonsors, we create it
             if (TextStart == -1)
             {
                 classCode += "\tclass Sensors\n";

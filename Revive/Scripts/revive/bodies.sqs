@@ -1,0 +1,63 @@
+﻿;*****************************************************************************
+;revive/bodies.sqs  v3.0.8  04/02/2012  by j0e
+;
+;Desc.: Subroutine of the revive engine that manages the bodies.
+;Call.: [_myp,_cm,_pm1,_pm2] Exec "j0e_pack\revive\bodies.sqs"
+;Arg..: "_myp" is the sender index in the array "j0e_players";
+;       "_cm" is the command;
+;       "_pm1","_pm2" are parameters.
+;Dep..: <array>j0e_aboutme, <array>j0e_players, <var>j0e_pong, <array>j0e_bodies,
+;       <script>net/send.sqs, <logic>j0e_server, <array>j0e_camxyz, <array>j0e_fwply.
+;Notes: Created to not load the big revivecoop. Added body remake command.
+;*****************************************************************************
+;_i _k / _st _ms / _xyz / _body _un
+
+_grpend = group j0e_grpend
+_k=(_THIS Select 0)
+_st=(_THIS Select 1)
+?_st=="DU":GoTo "DelUnit"
+?_st=="B+":GoTo "BodyCreate"
+?(_st=="B-")||(_st=="BR"):GoTo "BodyDelete"
+#Pong
+j0e_pong=TRUE
+?!(Local j0e_server):Exit
+?_st=="K+":_i=(j0e_fwply Select (_k*5+0))+1;j0e_fwply Set [_k*5+0,_i]
+?_st=="R+":_i=(j0e_fwply Select (_k*5+1))+1;j0e_fwply Set [_k*5+1,_i]
+Exit
+
+#BodyCreate
+_xyz=(j0e_camxyz Select _k)
+_ms=(Format ["%1",_xyz])
+?(_ms=="[-1,-1,-1]")||(_ms=="[-6,-6,-6]"):GoTo "Pong"
+_i=(_THIS Select 2)
+_j0e_posASL=(j0e_posASL select _k)
+_body=("BODY" CamCreate _xyz)
+_body setPosASL [_j0e_posASL select 0,_j0e_posASL select 1,(_j0e_posASL select 2)+0.25]
+_body SetDir (_i+90)
+j0e_bodies Set [_k,_body]
+GoTo "Pong"
+
+#BodyDelete
+_i=0
+_body=(j0e_bodies Select _k)
+?_body==_body:_i=(GetDir _body)-90;DeleteVehicle _body
+j0e_bodies Set [_k,OBJNULL]
+?_st=="B-":GoTo "Pong"
+~0.6
+_THIS=[_k,"BR",_i]
+GoTo "BodyCreate"
+
+#DelUnit
+_st=(j0e_players Select _k)
+_un=(Call _st)
+@(!IsNull (j0e_bodies select _k))||(!alive _un)
+_st=(j0e_players Select _k)
+_un=(Call _st)
+
+
+[_un] join _grpend;"_un DisableAI _x" forEach ["ANIM","AUTOTARGET","MOVE","TARGET","WEAPONAIM"];_un stop TRUE
+_ms = format ["j0e_players Set [%1,""<NULL>""]; j0e_camxyz Set [%1,[-6,-6,-6]];deleteVehicle (j0e_bodies select %1)",_k]
+[["<ALLME>"],_ms] Exec "j0e_pack\net\send.sqs"
+
+
+Exit

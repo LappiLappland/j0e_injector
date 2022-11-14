@@ -1,0 +1,19 @@
+﻿;*****************************************************************************
+;revive/climnu.sqs  v1.0.4  05/02/2012  by j0e
+;
+;Desc.: Called from the dialog and fwatch/fwmain.sqs.
+;Call.: _cm Exec "j0e_pack\revive\climnu.sqs"
+;Arg..: "_cm" is a following string command:
+;       {nx}   focus on next player,
+;       {pr}   focus on prev player,
+;       {rs}   reset the camera position,
+;       {mod}  login requested.
+;Dep..: <logic>j0e_server, <array>j0e_aboutme, <array>j0e_fwlogin,
+;       <script>net/send.sqs, <script>revive/camdlg.sqs, <bool>j0e_pause.
+;Notes: New login procedure.
+;*****************************************************************************
+;_i _me
+
+?(j0e_aboutme Select 4)!="?":Exit
+j0e_aboutme Set [4,_THIS]
+Exit

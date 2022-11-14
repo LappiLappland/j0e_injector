@@ -44,7 +44,7 @@
 
             //If player was set as vehicle. It will put all crew inside of it as players, not vehicle itself.
             //One downside is even when only 1 crew is playable, 2 others will be set in script too
-            //This is not critical tho
+            //But it's ok
             classCode += "\nj0e_players = [];_j0e_add = [];_unit = objNull;\"_j0e_add = [];_unit=objNull;call format[{_unit = %1},_x];if (_unit == driver _unit) then {j0e_players=j0e_players+[_x]} else {if (!isNull driver _unit) then {_j0e_add = _j0e_add + [format[\"\"%1D\"\",_x]]};if (!isNull gunner _unit) then {_j0e_add = _j0e_add + [format[\"\"%1G\"\",_x]]};if (!isNull commander _unit) then {_j0e_add = _j0e_add + [format[\"\"%1C\"\",_x]]};j0e_players = j0e_players + _j0e_add}\" forEach _j0e_players";
             classCode += '\n';
             Text = Text.Insert(0, classCode);

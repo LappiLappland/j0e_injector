@@ -1,0 +1,310 @@
+;*****************************************************************************
+;revive/main.sqs  v3.0.21  05/02/2012  by j0e
+;
+;Desc.: The cooperative revive engine.
+;Call.: 0|1 Exec "j0e_pack\revive\main.sqs"
+;Arg..: 1=enable j0e_pause.
+;Dep..: <logic>j0e_server, <param>_reviveType, <array>j0e_players, <var>j0e_gameis,
+;       <var>j0e_pong, <array>j0e_bodies, <array>j0e_camxyz, <array>j0e_aboutme,
+;       <array>j0e_camera, <dialog>j0eReviveDialog, <mark>Respawn_<SIDE>,
+;       <marks><j0e_players>, <unit>j0e_grpend, <script>net/mon.sqs, <array>j0e_fwlogin,
+;       <script>net/send.sqs, <script>revive/bodies.sqs, <script>revive/camdlg.sqs,
+;       <script>revive/mod.sqs, <var>j0e_fwstat, <script>fwatch/fwkia.sqs, <bool>j0e_pause.
+;_reviveType: 0  "none"     revive is off,
+;        1  "free"     revive is unlimited,
+;        2  "5 lifes"  revive is allowed 5 times for each player,
+;        3  "5 mins"   revive must be done whithin 5 minutes,
+;        4  "medic"    revive can be done only by a medic player.
+;Notes: The side is not considered when reviving.
+;       Marker "Respawn_<SIDE>" must exist to work fine.
+;       Due to a bug, the join to "GRPNULL" won't be used anymore.
+;       Critical bug solved when a player forces to delete a local unit.
+;       Active punishments for the mission moderators.
+;       Revised body ASL (x2), equipment transfer, bodies management, rejoin.
+;       Lost player joins j0e_grpend. Medic count. New saveme pos. New login.
+;*****************************************************************************
+;_i _t _k / _st _ms / _un _body _dumy / _xyz / _wep _mag / _mediz
+;_grpend / j0e_delun / _revive / _revmin / _revpst / _mod / _revchk / _ehl
+
+;*****************************************************************************
+;Script has been modified. (Not by j0e)
+; - Unnecessary things were deleted (This includes admin panel)
+; - Bots get deleted only after they die. Their bodies won't dissapear either
+; - Camera dialog shows which units are dead or bots
+
+j0e_giveNade = {private["_i","_give","_last"];_i=0;_last="";_give=[];while{_i<count _this}do{if(_this select _i!=_last)then{if("_x==_this select _i"count(magazines player)!="_x==_this select _i"count _this)then{_give=_give+[_this select _i]};_last=_this select _i;};_i=_i+1;};_give}
+j0e_findLand = {private["_pos","_thing","_thing2","_differ","_itter","_posi","_a","_z","_x","_y"];_pos = _this;_thing = "Barrel1" camCreate [_pos select 0, _pos select 1, -500];_thing2 = "PipeBomb" camCreate [_pos select 0, _pos select 1, -500];_thing setPos [_pos select 0, _pos select 1, 0];_thing2 setPosASL [_pos select 0, _pos select 1, 0];_differ=1;_itter=1;_posi = getPos _thing;_a=0;_z = 0;while {_z < 5} do{if ( _a == 0 )then{ _x=_differ;_y=0;};if ( _a == 1 )then{ _x=_differ;_y=_differ;};if ( _a == 2 )then{ _x=0;_y=_differ;};if ( _a == 3 )then{ _x=-_differ;_y=-_differ;};if ( _a == 4 )then{ _x=0;_y=-_differ;};if ( _a == 5 )then{ _x=-_differ;_y=_differ;};if ( _a == 6 )then{ _x=_differ;_y=-_differ;};if ( _a == 7 )then{ _x=-_differ;_y=0;};_thing setPos [(_posi select 0)+_x*_itter,(_posi select 1)+_y*_itter,0];_thing2 setPosASL [(_posi select 0)+_x*_itter,(_posi select 1)+_y*_itter,0];_z = (getPosASL _thing select 2)-(getPosASL _thing2 select 2);_a = _a + 1;_itter=_itter+1;if ( _itter > 100 )then{ _differ = 5};if ( _itter > 500 )then{ _differ = 10};if ( _itter > 1000 )then{ _differ = 100};if ( _itter > 5000 )then{ _z = 10; _thing setPosASL [-5936,0,0];};if ( _a > 7 )then{ _a = 0};};_pos = getPosASL _thing;"deleteVehicle _x" forEach [_thing, _thing2];_pos}
+_reviveType = Param1
+j0e_isPVP = FALSE
+j0e_fwstat=FALSE
+j0e_gameis=0
+j0e_pong=FALSE
+j0e_bodies=[]
+j0e_posASL=[]
+j0e_camxyz=[]
+j0e_aboutme=[(Count j0e_players),"<UNK>",-6,FALSE,"?","",FALSE,FALSE,-9,[0,0,0]]
+j0e_camera=[OBJNULL,FALSE,-1,FALSE,[270,10,5,0.35],FALSE]
+j0e_fwlogin=[]
+j0e_pause=FALSE
+_null=(Format ["%1",NIL])
+_onul=(Format ["%1",OBJNULL])
+_body=OBJNULL
+_dumy=OBJNULL
+_grpend=OBJNULL
+j0e_delun=[]
+_revive=1
+?_reviveType==2:_revive=5
+?_THIS==1:j0e_pause=TRUE
+_revmin=0
+_revpst=0
+_mod=-1
+_ehl=FALSE
+_mediz=[]
+
+?!(Local Player):j0e_aboutme Set [1,"<DS>"];j0e_aboutme Set [2,-1]
+_i=0
+#LoopPlayers
+_st=(j0e_players Select _i)
+_un=(Call _st)
+_ms=(Format ["%1",_un])
+?(_ms==_null)||(_ms==_onul)||(j0e_isPVP && side player != side _un):j0e_players Set [_i,"<NULL>"];GoTo "SkipMe"
+_ms=(TypeOf _un)
+?(_reviveType==4)&&(_ms In ["SoldierWMedic","SoldierEMedic","SoldierGMedic"]):_mediz Set [(Count _mediz),_i]
+?(j0e_aboutme Select 1)=="<DS>":GoTo "SkipMe"
+?_un==Player:j0e_aboutme Set [1,_st];j0e_aboutme Set [2,_i];j0e_camera Set [2,_i];j0e_aboutme Set [9,(GetPos Player)]
+#SkipMe
+?(GetMarkerType _st)!="":_st SetMarkerSize [0,0]
+j0e_bodies Set [_i,OBJNULL]
+j0e_camxyz Set [_i,[-1,-1,-1]]
+j0e_fwlogin Set [_i,-1]
+j0e_delun Set [_i,FALSE]
+_i=_i+1
+?_i<(j0e_aboutme Select 0):GoTo "LoopPlayers"
+
+@(TIME>0.5)
+ShowCinemaBorder FALSE
+?(j0e_aboutme Select 2)==-6:Exit
+
+_ms=(Format ["%1",j0e_grpend])
+?(_ms!=_null)&&(_ms!=_onul):_grpend=(Group j0e_grpend);RemoveAllWeapons j0e_grpend;"j0e_grpend DisableAI _x" forEach ["ANIM","AUTOTARGET","MOVE","TARGET","WEAPONAIM"]; j0e_grpend stop TRUE
+?_grpend In [OBJNULL]:j0e_server GlobalChat "§ Unit 'j0e_grpend' not found."
+
+?(Local j0e_server):0 Exec "j0e_pack\net\mon.sqs"
+?(j0e_aboutme Select 1)=="<DS>":GoTo "DeleAI"
+
+_st=(Format ["Respawn_%1",(Side Player)])
+_ms="§ The marker '%1' is missing, not good."
+?(GetMarkerType _st)=="":j0e_server GlobalChat (Format [_ms,_st])
+_st=(j0e_aboutme Select 1)
+_ms="§ Your marker '%1' is missing: locate you on map will be difficult."
+?(GetMarkerType _st)=="":j0e_server GlobalChat (Format [_ms,_st])
+?(GetMarkerType _st)!="":j0e_aboutme Set [9,(GetMarkerPos _st)]
+@!j0e_pause
+
+#DeleAI
+_i=0
+#LoopDeleAI
+?_i==(j0e_aboutme Select 2):GoTo "NextDeleAI"
+_st=(j0e_players Select _i)
+?_st=="<NULL>":GoTo "NextDeleAI"
+_un=(Call _st)
+_ms=(Format ["%1",_un])
+?(_ms!=_null)&&(_ms!=_onul):GoTo "IsLocalAI"
+;j0e_players Set [_i,"<NULL>"]
+;j0e_camxyz Set [_i,[-1,-1,-1]]
+_un=(j0e_bodies Select _i)
+?_un In [OBJNULL]:GoTo "NextDeleAI"
+DeleteVehicle _un
+j0e_bodies Set [_i,OBJNULL]
+~0.3
+GoTo "NextDeleAI"
+#IsLocalAI
+?(j0e_delun Select _i)||!(Local _un):GoTo "NextDeleAI"
+;?!(_grpend In [OBJNULL]):[_un] Join _grpend
+;?!(Local j0e_server)&&!(_grpend In [OBJNULL]):GoTo "NextDeleAI"
+_ms=(Format [{if (time > 10) then {j0e_server GlobalChat "§ %2 exited. His bot will be deleted after death."}; j0e_delun Set [%1,TRUE]},_i,(Name _un)])
+?(GetMarkerType _st)!="":_ms=_ms+(Format [";{%1} SetMarkerSize [0,0]",_st])
+[["<ALLME>"],_ms] Exec "j0e_pack\net\send.sqs"
+~0.3
+[_i,"DU"] Exec "j0e_pack\revive\bodies.sqs"
+#NextDeleAI
+_i=_i+1
+?_i<(j0e_aboutme Select 0):GoTo "LoopDeleAI"
+
+~0.6
+?j0e_gameis!=0:Exit
+?_reviveType!=4:GoTo "SkipMediz"
+_ms=""
+_t=({(j0e_players Select _x)!="<NULL>"} Count _mediz)
+_k=({Format["%1",(j0e_camxyz Select _x)]!="[-1,-1,-1]"} Count _mediz)
+?(_t-_k)!=(j0e_aboutme Select 8):j0e_aboutme Set [8,(_t-_k)];_ms=(Format ["§ Medics available: %1.",(j0e_aboutme Select 8)])
+?(_ms!="")&&(j0e_aboutme Select 1)!="<DS>":j0e_server GlobalChat _ms
+#SkipMediz
+?!(Local j0e_server):GoTo "MeAlive"
+_t=Count j0e_players
+_k="! isNull _x" count j0e_bodies
+?_t<=_k+("_x" count j0e_delun) && !j0e_isPVP:_ms="j0e_gameis=-6";[["<ALLME>"],_ms] Exec "j0e_pack\net\send.sqs"
+~0.3
+?(j0e_aboutme Select 1)=="<DS>":GoTo "DeleAI"
+
+#MeAlive
+?_revive<0:GoTo "DeleAI"
+?(j0e_aboutme Select 3):GoTo "NewUn"
+_i=(j0e_aboutme Select 2)
+?!_ehl:_ehl=TRUE;Player AddEventHandler ["KILLED",{[_THIS,TRUE] Exec "j0e_pack\fwatch\fwkia.sqs"}]
+?_body In [OBJNULL]:_body=Player
+?Alive _body:GoTo "DeleAI"
+j0e_aboutme Set [3,TRUE]
+j0e_camera Set [5,FALSE]
+?_reviveType In [0,2]:_revive=_revive-1
+?(j0e_aboutme Select 6):_revive=0
+~1.2
+@(Abs(Speed _body)<=0.01)
+_j0e_posASL=[(getPosASL _body select 0),(getPosASL _body select 1),(getPosASL _body select 2)]
+
+_dumy=("EMPTYDETECTOR" CamCreate [0,0])
+_dumy setPosASL _j0e_posASL
+_xyz = getPos _dumy
+? (_j0e_posASL select 2) < -0.1 : _j0e_posASL = (_xyz call j0e_findLand); _j0e_posASL set [2,(_j0e_posASL select 2)-0.5]; _dumy setPosASL _j0e_posASL; _xyz = getPos _dumy
+deleteVehicle _dumy;
+_ms=(Format ["if ((j0e_players select %3)!=""<NULL>"" ) then {{%1} SetMarkerPos %2;{%1} SetMarkerSize [1,1]}",(j0e_aboutme Select 1),_xyz, j0e_aboutme Select 2])
+?(_st!="")&&(_revive>=1):[["<ALLME>"],_ms] Exec "j0e_pack\net\send.sqs"
+~0.3
+j0e_camera Set [1,TRUE]
+0 Exec "j0e_pack\revive\camdlg.sqs"
+@!(j0e_camera Select 1)
+_st="."
+?(_reviveType==1):_st=", waiting to be revived."
+?(_reviveType==2):_st=(Format [" and has %1 lifes left.",_revive]);CtrlSetText [21002,(Format ["Lifes %1",_revive])]
+?(_reviveType==3):_st=" and must be revived within 5 minutes."
+?(_reviveType==4):_st=", waiting to be revived by a medic."
+?(j0e_aboutme Select 6):_st=" and cannot be revived."
+?(_j0e_posASL select 0)==-5936 : _st = " and was absorbed by the sea."
+_k=(j0e_aboutme Select 2)
+_ms=(Format [{j0e_camxyz Set [%1,%2];j0e_posASL set [%1,%5];if ((j0e_players select %1)!="<NULL>") then {j0e_server GlobalChat "§ %3 is just dead%4"};},_k,_xyz,(Name Player),_st,_j0e_posASL])
+?j0e_fwstat:_ms=_ms+(Format [";[%1,{K+}] Exec {j0e_pack\revive\bodies.sqs}",_k])
+[["<ALLME>"],_ms] Exec "j0e_pack\net\send.sqs"
+~0.3
+_revchk=FALSE
+
+#NewUn
+?_revchk:GoTo "CheckRevive"
+?!(Alive Player):GoTo "DeleAI"
+RemoveAllWeapons Player
+;Player DisableAI "MOVE"
+Player SwitchMove "LYING"
+?_mod>-1:_body RemoveAction _mod;_mod=-1
+_k=(j0e_aboutme Select 2)
+?(_revive<1)||(j0e_aboutme Select 6)||((_j0e_posASL select 0)==-5936):GoTo "ReviveOff"
+_i=(GetDir _body)
+Player SetDir _i
+_body SetPos (GetPos Player)
+j0e_pong=FALSE
+_ms=(Format ["[%1,{B+},%2] Exec {j0e_pack\revive\bodies.sqs}",_k,_i])
+[["<ALLME>"],_ms] Exec "j0e_pack\net\send.sqs"
+@j0e_pong
+_revpst=0
+?_reviveType==3:_revive=300;_revmin=TIME;CtrlSetText [21002,(Format ["Time %1",_revive])]
+_revchk=TRUE
+GoTo "DeleAI"
+
+#CheckRevive
+~0.6
+?(j0e_aboutme Select 7):GoTo "ReviveMe"
+_k=-1
+_t=(j0e_aboutme Select 2)
+_i=(j0e_aboutme Select 0)
+_dumy=(j0e_bodies Select _t)
+?_dumy In [OBJNULL]:GoTo "NextRevive"
+_i=0
+#LoopRevive
+?_i==(j0e_aboutme Select 2):GoTo "NextRevive"
+_st=(j0e_players Select _i)
+?_st=="<NULL>":GoTo "NextRevive"
+_un=(Call _st)
+_ms=(Format ["%1",_un])
+?(_ms==_null)||(_ms==_onul):GoTo "NextRevive"
+?!(Alive _un):GoTo "NextRevive"
+_ms=(TypeOf _un)
+?(_reviveType==4)&&!(_ms In ["SoldierWMedic","SoldierEMedic","SoldierGMedic"]):GoTo "NextRevive"
+?(_un Distance _dumy)<2.5:_revpst=_revpst+1;_k=_i
+?_revpst>6:GoTo "ReviveMe"
+#NextRevive
+_i=_i+1
+?_i<(j0e_aboutme Select 0):GoTo "LoopRevive"
+?(_k!=-1)||(_reviveType!=3):GoTo "DeleAI"
+_t=(TIME-_revmin)
+_k=_t-(_t Mod 10)
+_t=300-_k
+?_t==_revive:GoTo "DeleAI"
+_i=(_t Mod 60)
+_ms=""
+_g=(j0e_aboutme Select 2)
+?(_t>30)&&(_i==0):_ms=(Format [{if ((j0e_players select %3)!="<NULL>") then {j0e_server GlobalChat "§ %1 has %2 mins to be revived."}},(Name Player),(_t/60),_g])
+?(_t>=10)&&(_t<=30):_ms=(Format [{if ((j0e_players select %3)!="<NULL>") then {j0e_server GlobalChat "§ %1 has %2 secs to be revived."}},(Name Player),_t,_g])
+?(_t<10):_t=0;_ms=(Format [{if ((j0e_players select %2)!="<NULL>") then {j0e_server GlobalChat "§ %1 was lost."}},(Name Player),_g])
+?(_ms!=""):[["<ALLME>"],_ms] Exec "j0e_pack\net\send.sqs"
+_revive=_t
+CtrlSetText [21002,(Format ["Time %1",_revive])]
+?_revive>=1:GoTo "DeleAI"
+GoTo "DoneMag"
+
+#ReviveMe
+if (j0e_aboutme Select 7) then {_st="The *moderator*";_revmin=-1;j0e_aboutme Set [7,FALSE]} else {_st=(Name _un);_revmin=_i}
+j0e_camera Set [1,TRUE]
+j0e_camera Set [3,TRUE]
+@!(j0e_camera Select 1)
+_wep=(Weapons _body)
+_i=0
+_t=(Count _wep)-1
+#LoopWep
+?_i>_t:GoTo "DoneWep"
+Player Action ["TAKE WEAPON",_body,0,0,(_wep Select _i)]
+_i=_i+1
+GoTo "LoopWep"
+#DoneWep
+_mag=(Magazines _body)
+_i=0
+_t=(Count _mag)-1
+#LoopMag
+?_i>_t:GoTo "DoneMag"
+Player Action ["TAKE MAGAZINE",_body,0,0,(_mag Select _i)]
+_i=_i+1
+GoTo "LoopMag"
+#DoneMag
+~1.2
+_k=(j0e_aboutme Select 2)
+j0e_pong=FALSE
+_ms=(Format ["[%1,{B-}] Exec {j0e_pack\revive\bodies.sqs}",_k])
+[["<ALLME>"],_ms] Exec "j0e_pack\net\send.sqs"
+@j0e_pong
+?_revive<1:GoTo "RemoveDumy"
+Player SetPos (j0e_camxyz Select _k)
+~2.1
+
+
+"Player addMagazine _x" forEach (_mag call j0e_giveNade)
+j0e_camera Set [5,TRUE]
+#RemoveDumy
+DeleteVehicle _body
+_body=OBJNULL
+_ms=(Format ["{%1} SetMarkerSize [0,0]",(j0e_aboutme Select 1)])
+?(GetMarkerType (j0e_aboutme Select 1))!="":[["<ALLME>"],_ms] Exec "j0e_pack\net\send.sqs"
+~0.3
+?_revive<1:GoTo "ReviveOff"
+_ms=(Format [{j0e_camxyz Set [%1,[-1,-1,-1]];if ((j0e_players select %1)!="<NULL>") then {j0e_server GlobalChat "§ %2 revived %3."}},_k,_st,(Name Player)]);
+player setCaptive FALSE
+?j0e_fwstat&&(_revmin>=0):_ms=_ms+(Format [";[%1,{R+}] Exec {j0e_pack\revive\bodies.sqs}",_revmin])
+[["<ALLME>"],_ms] Exec "j0e_pack\net\send.sqs"
+~0.3
+_ehl=FALSE
+j0e_aboutme Set [3,FALSE]
+GoTo "DeleAI"
+
+#ReviveOff
+[Player] Join _grpend
+_revive=-9
+_ms=(Format ["j0e_camxyz Set [%1,[-6,-6,-6]];j0e_bodies Set [%1,player]",_k])
+[["<ALLME>"],_ms] Exec "j0e_pack\net\send.sqs"
+~0.3
+GoTo "DeleAI"

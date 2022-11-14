@@ -1,0 +1,36 @@
+﻿;*****************************************************************************
+;fwatch/fwkia.sqs  v1.0.7  11/02/2012  by j0e
+;
+;Desc.: Killed event handler for fwstat.
+;Call.: _un AddEventHandler ["KILLED",{[_THIS,_bol] Exec "j0e_pack\fwatch\fwkia.sqs"}]
+;Arg..: "_un" is a player or an unit;
+;       "_bol" is a boolean value, it is true if the unit is friendly.
+;Dep..: <logic>j0e_server, <var>j0e_fwstat, <array>j0e_players, <array>j0e_fwply,
+;       <array>j0e_aboutme, <script>net/send.sqs.
+;Notes: Array "_THIS" is equal to [_target,_killer]. This version scores
+;       both enemy and friendly kills.
+;*****************************************************************************
+;_i / _st / _un / _ta _kl / _bol
+
+?!j0e_fwstat:Exit
+_bol=(_THIS Select 1)
+_THIS=(_THIS Select 0)
+?(_THIS Select 0)==(_THIS Select 1):Exit
+_ta=-1
+_kl=-1
+_i=0
+#LoopPlayers
+_st=(j0e_players Select _i)
+?_st=="<NULL>":GoTo "NextPlayer"
+_un=(Call _st)
+?_un==(_THIS Select 0):_ta=_i
+?_un==(_THIS Select 1):_kl=_i
+#NextPlayer
+_i=_i+1
+?_i<(j0e_aboutme Select 0):GoTo "LoopPlayers"
+?_kl<0:Exit
+if (_ta<0) then {if (_bol) then {_i=4} else {_i=3}} else {_i=2}
+~(Random 2.1)
+_st=(Format ["_x=(j0e_fwply Select (%1*5+%2))+1;j0e_fwply Set [%1*5+%2,_x]",_kl,_i])
+if (Local j0e_server) then {Call _st} else {[["<DS>"],_st] Exec "j0e_pack\net\send.sqs"}
+Exit

@@ -1,11 +1,15 @@
 ﻿using System;
 using System.Text;
 using System.IO;
+using System.Reflection;
 using System.Diagnostics;
 using System.Threading;
 
 namespace Revive_Injector
 {
+    /// <summary>
+    /// Contains basic functions
+    /// </summary>
     public static class baza
     {
 
@@ -13,6 +17,8 @@ namespace Revive_Injector
         public static string[] PlayersName;
         public static int endID;
         public static string FinalLog = "";
+
+        public static Assembly assembly = Assembly.GetExecutingAssembly();
 
         public const int MISSION_END_TIME = 10;
         private const int PBOMANAGER_LIMIT_LINES = 15;
@@ -173,6 +179,21 @@ namespace Revive_Injector
                     CopyDirectory(subDir.FullName, newDestinationDir, true);
                 }
             }
+        }
+
+        /// <summary>
+        /// Read file inside "Revive\Scripts" folder
+        /// </summary>
+        /// <param name="path">Path to file starting from "Revive\Scripts"</param>
+        /// <returns></returns>
+        public static string ReadSQS(string path)
+        {
+            string file = $"WindowsForms_revive.Revive.Scripts.{path.Replace(@"\",".")}";
+
+            Stream stream = assembly.GetManifestResourceStream(file);
+            StreamReader streamReader = new StreamReader(stream, ANSI);
+
+            return streamReader.ReadToEnd();
         }
 
         public static void Unpbo(string currentFolder, string managerPBO)

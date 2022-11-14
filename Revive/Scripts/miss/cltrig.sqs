@@ -1,0 +1,20 @@
+﻿;*****************************************************************************
+;miss/cltrig.sqs  v3.0.1  07/08/2011  by j0e
+;
+;Desc.: A simple triggers monitor from the client point of view.
+;Call.: 0 Exec "j0e_pack\miss\cltrig.sqs"
+;Arg..: -
+;Dep..: <var>j0e_gameis.
+;Notes: Collect here all relevant trigger events for the mission progress.
+;*****************************************************************************
+;_ms
+@(TIME>0)
+@(j0e_gameis!=0)
+_ms="Mission failed.\nYou are all dead.";
+TitleText [_ms,"PLAIN"]
+~5
+_cam = j0e_camera select 0;
+ _cam cameraeffect ["terminate", "Back"];
+ camdestroy _cam;
+ closeDialog 0;
+Exit

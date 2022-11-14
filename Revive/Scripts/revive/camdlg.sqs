@@ -1,0 +1,208 @@
+﻿;*****************************************************************************
+;revive/camdlg.sqs  v3.0.10  05/02/2012  by j0e
+;
+;Desc.: Manages the revive camera and dialog.
+;Call.: 0 Exec "j0e_pack\revive\camdlg.sqs"
+;Arg..: -
+;Dep..: <array>j0e_players, <array>j0e_aboutme, <array>j0e_camera, <var>j0e_gameis,
+;       <array>j0e_camxyz, <dialog>j0eReviveDialog, <logic>j0e_server, <array>j0e_fwlogin.
+;Notes: Active punishments for the mission moderators. Autoupdate.
+;       New login procedure.
+;*****************************************************************************
+;_i _t _k / _st _ms / _un / _cam / _xyz / _lix / _upd / _dly / _gome
+
+_null=(Format ["%1",NIL])
+_onul=(Format ["%1",OBJNULL])
+_lix=[]
+_gome=FALSE
+
+_i=(j0e_aboutme Select 2)
+?(j0e_fwlogin Select _i) In [0,1]:GoTo "CreateDlg"
+
+_cam=(j0e_camera Select 0)
+?!(_cam In [OBJNULL]):j0e_camera Set [1,FALSE];Exit
+_i=(j0e_aboutme Select 2)
+j0e_camera Set [2,_i]
+_st=(j0e_players Select _i)
+_un=(Call _st)
+_xyz=+(j0e_camxyz Select _i)
+_ms=(Format ["%1",_xyz])
+?(_ms=="[-1,-1,-1]")||(_ms=="[-6,-6,-6]"):_xyz=(GetPos (Vehicle _un))
+_cam=("CAMERA" CamCreate _xyz)
+j0e_camera Set [0,_cam]
+_vehPos=[]
+_vehPosOld=[]
+if (_ms=="[-1,-1,-1]") then {_cam CamSetTarget (Vehicle _un);_vehPos=getPosASL (Vehicle _un);_vehPosOld=getPosASL player} else {_cam CamSetTarget [_xyz select 0, _xyz select 1, _xyz select 2];_vehPos=_xyz;_vehPosOld=j0e_posASL select _i}
+
+_cam CameraEffect ["EXTERNAL","BACK"]
+_cam CamCommand "INERTIA ON"
+_xyz=+(j0e_camera Select 4)
+_k=(_xyz Select 0)
+_t=(_xyz Select 1)
+_xyz Set [0,(_t*Cos(_k))]
+_xyz Set [1,(_t*Sin(_k))]
+_cam CamSetRelPos [_xyz select 0, _xyz select 1, _xyz select 2]
+_cam CamCommit 0
+
+_realNames=[]
+_wait=0
+#CreateDlg
+_dly=-1
+_i=(j0e_aboutme Select 2)
+_upd=(CreateDialog "j0eReviveDialog")
+?(j0e_fwlogin Select _i) In [0,1]:_upd=TRUE
+?!_upd:GoTo "EndCreateDlg"
+j0e_aboutme Set [4,"?"]
+_xyz=+(j0e_camera Select 4)
+_i=(_xyz Select 0)
+_t=(_xyz Select 1)
+_k=(_xyz Select 2)
+_smooth=(_xyz select 3)
+SliderSetRange [21004,90,450]
+SliderSetRange [21005,1,150]
+SliderSetRange [21006,0,150]
+SliderSetRange [21017,0,2]
+SliderSetSpeed [21004,10,30]
+SliderSetSpeed [21005,1,5]
+SliderSetSpeed [21006,1,5]
+SliderSetSpeed [21017,0.05,0.1]
+SliderSetPosition [21004,_i]
+SliderSetPosition [21005,_t]
+SliderSetPosition [21006,_k]
+SliderSetPosition [21017,_smooth]
+CtrlSetText [21014,(Format ["A %1",_i])]
+CtrlSetText [21015,(Format ["D %1",_t])]
+CtrlSetText [21016,(Format ["H %1",_k])]
+CtrlSetText [21018,(Format ["S %1",_smooth])]
+#MakeListAgain
+_i=0
+lbClear 21001
+_updateTime=_time + 5
+#LoopAddDlg
+_k=-1
+_st=(j0e_players Select _i)
+?_st=="<NULL>":GoTo "NextAddDlg"
+_xyz=+(j0e_camxyz Select _i)
+_ms=(Format ["%1",_xyz])
+?_ms=="[-6,-6,-6]":GoTo "NextAddDlg"
+_un=(Call _st)
+_ms=(Format ["%1",_un])
+?(_ms==_null)||(_ms==_onul):GoTo "NextAddDlg"
+if (!j0e_isPVP) then {CtrlSetText [21002, (Format ["%1 alive", (Count j0e_players)-("! isNull _x" count j0e_bodies)-("_x" count j0e_delun)])]} else {CtrlSetText [21002, (Format ["%1 alive", ("_x != {<NULL>}" Count j0e_players)-("! isNull _x" count j0e_bodies)-("_x" count j0e_delun)])]}
+_st = ""
+? ! alive _un || ! isNull (j0e_bodies select _i): _st = " (Dead)"
+? j0e_delun select _i : _st = " (Bot)"
+? _un != vehicle _un : _st = _st + format[" (%1)", typeOf Vehicle _un]; if (_un == driver vehicle _un) then {_st = _st + " (Driver)"} else {if (_un == gunner vehicle _un) then {_st = _st + " (Gunner)"} else {if (_un == commander vehicle _un) then {_st = _st + " (Commander)"} else {_st = _st + " (Cargo)"}}}
+
+_realNames set [_i,name _un]
+_st=format["%1%2",Name _un, _st]
+_k=(LbAdd [21001,_st])
+LbSetValue [21001,_k,_i]
+? lbCurSel 21001 == -1: LbSetCurSel [21001,_k];
+?_i==(j0e_camera Select 2):CtrlSetText [21003,name _un]
+
+#NextAddDlg
+_lix Set [_i,_k]
+_i=_i+1
+?_i<(j0e_aboutme Select 0):GoTo "LoopAddDlg"
+#EndCreateDlg
+_upd=FALSE
+j0e_camera Set [1,FALSE]
+
+#LoopCamera
+?j0e_gameis!=0&&Dialog:CloseDialog 0
+?j0e_gameis!=0:Exit
+_cam=(j0e_camera Select 0)
+?_cam In [OBJNULL]:GoTo "CloseCamDlg"
+?(j0e_camera Select 3):_gome=TRUE
+?Dialog&&_gome:CloseDialog 0;GoTo "SkipLblChanged"
+?Dialog:GoTo "SkipDlgCheck"
+?(j0e_camera Select 5):GoTo "CloseCamDlg"
+?_dly<0:_dly=TIME;j0e_server GlobalChat "§ Dialog will be restored in 9 seconds."
+?(TIME-_dly)>9:GoTo "CreateDlg"
+#SkipDlgCheck
+_i=(j0e_camera Select 2)
+? _time > _updateTime : goto "MakeListAgain"
+?_upd||!Dialog:GoTo "SkipLblChanged"
+_k=(LbCurSel 21001)
+_t=(LbValue [21001,_k])
+?_i!=_t:_i=_t;j0e_camera Set [2,_i];_upd=TRUE
+#SkipLblChanged
+?_gome:_i=(j0e_aboutme Select 2);_upd=TRUE
+_st=(j0e_players Select _i)
+?_st=="<NULL>":GoTo "CamOnNextPly"
+_un=(Call _st)
+_ms=(Format ["%1",_un])
+?(_ms==_null)||(_ms==_onul):GoTo "CamOnNextPly"
+_xyz=+(j0e_camxyz Select _i)
+_ms=(Format ["%1",_xyz])
+?_ms=="[-6,-6,-6]":GoTo "CamOnNextPly"
+?(j0e_aboutme Select 4) In ["nx","pr"]:GoTo "CamOnNextPly"
+if (_ms=="[-1,-1,-1]") then {_vehPosOld=_vehPos;_cam CamSetTarget (Vehicle _un); _vehPos = getPosASL (vehicle _un)} else {_vehPosOld=_vehPos;_cam CamSetTarget [_xyz select 0, _xyz select 1, _xyz select 2]; _vehPos=j0e_posASL select _i}
+?!Dialog||!_upd:GoTo "SkipDlgLabel"
+_k=(_lix Select _i)
+?_k<0:GoTo "SkipDlgLabel"
+LbSetCurSel [21001,_k]
+_st=_realNames select _k
+CtrlSetText [21003,_st]
+#SkipDlgLabel
+_xyz=+(j0e_camera Select 4)
+?_gome||(j0e_aboutme Select 4)=="rs":_xyz=[270,10,5,0.35];j0e_aboutme Set [4,"rs+"]
+_i=(_xyz Select 0)
+_t=(_xyz Select 1)
+_k=(_xyz Select 2)
+_smooth=(_xyz Select 3)
+?Dialog&&(j0e_aboutme Select 4)=="rs+":SliderSetPosition [21004,_i];SliderSetPosition [21005,_t];SliderSetPosition [21006,_k]; SliderSetPosition [21017,_smooth]
+?(j0e_aboutme Select 4)=="rs+":GoTo "SkipDlgSlids"
+?!Dialog:GoTo "SkipDlgSlids"
+_i=(SliderPosition 21004)
+_t=(SliderPosition 21005)
+_k=(SliderPosition 21006)
+_smooth=(sliderPosition 21017)
+_i=_i-(_i Mod 1)
+_t=_t-(_t Mod 1)
+_k=_k-(_k Mod 1)
+_smooth=_smooth - (_smooth mod 0.01)
+#SkipDlgSlids
+_xyz Set [0,(_t*Cos(_i))]
+_xyz Set [1,(_t*Sin(_i))]
+_xyz Set [2,_k]
+? (_wait < _time) || (_upd): _cam CamSetRelPos [_xyz select 0, _xyz select 1, _xyz select 2]
+if (_upd) then {_cam CamSetRelPos [_xyz select 0, _xyz select 1, (_xyz select 2)+abs((_vehPos select 2)-(_vehPosOld select 2))];_cam CamCommit 2.1;_upd=FALSE; _wait = _time + 2.1} else {if (_wait < _time) then {_cam CamCommit _smooth}}
+~0.01
+?(j0e_aboutme Select 4) In ["nx+","pr-","rs+"]:j0e_aboutme Set [4,"?"]
+?_gome:GoTo "WaitExit"
+?!Dialog:GoTo "LoopCamera"
+j0e_camera Set [4,[_i,_t,_k,_smooth]]
+CtrlSetText [21014,(Format ["A %1",_i])]
+CtrlSetText [21015,(Format ["D %1",_t])]
+CtrlSetText [21016,(Format ["H %1",_k])]
+CtrlSetText [21018,(Format ["S %1",_smooth])]
+GoTo "LoopCamera"
+
+#CamOnNextPly
+_upd=TRUE
+_i=(j0e_camera Select 2)
+?(j0e_aboutme Select 4)=="nx":j0e_aboutme Set [4,"nx+"]
+?(j0e_aboutme Select 4)=="pr":j0e_aboutme Set [4,"pr-"]
+if ((j0e_aboutme Select 4)=="pr-") then {_i=_i-1} else {_i=_i+1}
+?_i<0:_i=(j0e_aboutme Select 0)-1
+?_i>=(j0e_aboutme Select 0):_i=0
+j0e_camera Set [2,_i]
+?!_gome:GoTo "LoopCamera"
+
+#WaitExit
+j0e_camera Set [1,FALSE]
+@(j0e_camera Select 5)
+
+#CloseCamDlg
+j0e_camera Set [3,FALSE]
+j0e_camera Set [5,FALSE]
+?Dialog:CloseDialog 0
+_cam=(j0e_camera Select 0)
+?_cam In [OBJNULL]:Exit
+_cam CameraEffect ["TERMINATE","BACK"]
+CamDestroy _cam
+_cam=OBJNULL
+j0e_camera Set [0,OBJNULL]
+Exit

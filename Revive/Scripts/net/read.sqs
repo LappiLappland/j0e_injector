@@ -1,0 +1,30 @@
+﻿;*****************************************************************************
+;net/read.sqs  v3.0.3  12/06/2011  by j0e
+;
+;Desc.: Receives and executes a command from another host.
+;Call.: [_sr,[_to],_ms] Exec "j0e_pack\net\read.sqs"
+;Arg..: "_sr" is the sender, type string, taken from "j0e_players";
+;       "_to" is an array of players, taken from "j0e_players";
+;       if it is empty, all players, except the sender, will exec the command;
+;       if equal to ["<ALLME>"] the sender will exec too;
+;       if the string "<DS>" is in the array also the server will exec;
+;       "_ms" is a string containing a command to exec with "Call _ms".
+;Dep..: <logic>j0e_server, <array>j0e_aboutme.
+;Notes: -
+;*****************************************************************************
+
+_sr=(_THIS Select 0)
+_to=(_THIS Select 1)
+_ms=(_THIS Select 2)
+_me=FALSE
+?(Count _to)>0:GoTo "NotZero"
+?_sr==(j0e_aboutme Select 1):Exit
+_me=TRUE
+#NotZero
+?(Count _to)!=1:GoTo "CheckMe"
+?(_to Select 0)=="<ALLME>":_me=TRUE
+#CheckMe
+?(j0e_aboutme Select 1) In _to:_me=TRUE
+?("<DS>" In _to)&&(Local j0e_server):_me=TRUE
+?_me:Call _ms
+Exit

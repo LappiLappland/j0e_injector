@@ -7,7 +7,7 @@ namespace Revive_Injector
 
     static class Program
     {
-        public static bool Main(string currentFolder, string managerPBO)
+        public static bool ConvertMission(string currentFolder, string managerPBO)
         {
 
             if (baza.DEBUG_REWRITE == baza.REWRITE_TYPE.UNPBO_REPBO || baza.DEBUG_REWRITE == baza.REWRITE_TYPE.UNPBO_ONLY)
@@ -91,10 +91,10 @@ namespace Revive_Injector
             }
 
             string alreadyHasRevive = sqm.checkRevive(File.ReadAllText(MissionFolder + "mission.sqm"));
+            string mis = DIRECTORY.Remove(0, DIRECTORY.LastIndexOf('\\') + 1);
 
             if (alreadyHasRevive.Length > 0)
             {
-                string mis = DIRECTORY.Remove(0, DIRECTORY.LastIndexOf('\\') + 1);
                 baza.FinalLog += $"Mission {mis}: Conversion failed. Error - mission.sqm already has revive. ({alreadyHasRevive})\n";
                 
                 if (baza.DEBUG_REWRITE != baza.REWRITE_TYPE.REWRITE_EXISTING) Directory.Delete(MissionFolder, true);
@@ -133,7 +133,24 @@ namespace Revive_Injector
 
 
             mission mission = new mission(MissionFolder, MissionFolderOld, IFbaza);
-            string log = mission.doWork();
+            string log = "";
+
+            try
+            {
+                log = mission.doWork();
+            }
+            catch //Delete temp folder if program crashes
+            {
+                if (baza.DEBUG_REWRITE != baza.REWRITE_TYPE.REWRITE_EXISTING)
+                {
+                    Directory.Delete(MissionFolder, true);
+                }
+
+
+                baza.FinalLog += $"Mission {mis}: Conversion failed. Error - unknown error. (Please report)\n";
+
+                return;
+            }
 
             if (!log.Contains("Conversion failed"))
             {
@@ -166,7 +183,7 @@ namespace Revive_Injector
                     else
                     {
                         Directory.Delete(MissionFolder, true);
-                        string mis = DIRECTORY.Remove(0, DIRECTORY.LastIndexOf('\\') + 1);
+                        mis = DIRECTORY.Remove(0, DIRECTORY.LastIndexOf('\\') + 1);
                         log = $"Mission {mis}: Conversion failed. Error - mission folder already exists in !CONVERTED.";
 
                     }

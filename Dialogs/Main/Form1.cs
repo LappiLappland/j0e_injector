@@ -100,7 +100,7 @@ namespace WindowsForms_revive
             //Revive_Injector.baza.DEBUG_IGNORESEMICOLONSERROR = st_semi;
             Revive_Injector.baza.FinalLog = "";
 
-            bool status = Revive_Injector.Program.Main(textBoxDir.Text, pathToManager);
+            bool status = Revive_Injector.Program.ConvertMission(textBoxDir.Text, pathToManager);
 
             System.Media.SystemSounds.Exclamation.Play();
 

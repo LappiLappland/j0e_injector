@@ -1,0 +1,20 @@
+﻿;*****************************************************************************
+;net/send.sqs  v3.0.1  22/05/2011  by j0e
+;
+;Desc.: Sends a command through the network.
+;Call.: [[_to],_ms] Exec "j0e_pack\net\send.sqs"
+;Arg..: "_to" is an array of players, taken from "j0e_players", to contact;
+;       if an empty array is specified, all players, except the sender, will
+;       be contacted; to call the sender too, set it to ["<ALLME>"];
+;       to call the server add the string "<DS>";
+;       "_ms" is a string containing a command to exec with "Call _ms".
+;Dep..: <array>j0e_aboutme, <logic>j0e_server, <script>net/read.sqs.
+;Notes: -
+;*****************************************************************************
+
+_to=(_THIS Select 0)
+_ms=(_THIS Select 1)
+_gr=(Group j0e_server)
+_in=(Format ["[{%1},%2,{%3}] Exec {j0e_pack\net\read.sqs}",(j0e_aboutme Select 1),_to,_ms])
+"LOGIC" CreateUnit [[0,0,0],_gr,_in]
+Exit

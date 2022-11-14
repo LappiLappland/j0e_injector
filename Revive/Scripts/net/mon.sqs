@@ -1,0 +1,19 @@
+﻿;*****************************************************************************
+;net/mon.sqs  v1.0.3  22/07/2011  by j0e
+;
+;Desc.: Keeps the logic group low to avoid messagges loss.
+;Call.: 0 Exec "j0e_pack\net\mon.sqs"
+;Arg..: -
+;Dep..: <logic>j0e_server.
+;Notes: -
+;*****************************************************************************
+
+?!(Local j0e_server):Exit
+_gr=(Group j0e_server)
+#Loop
+@(Count (Units _gr))>1
+_un=((Units _gr) Select 1)
+~0.15
+~(Random 0.3)
+DeleteVehicle _un
+GoTo "Loop"

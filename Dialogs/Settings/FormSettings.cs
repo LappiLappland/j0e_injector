@@ -79,7 +79,7 @@ namespace WindowsForms_revive
                         return;
                     }
                 }
-                catch (ArgumentException exception)
+                catch
                 {
                     MessageBox.Show("PBO manager path is incorrect!");
                     return;

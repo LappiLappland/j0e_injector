@@ -98,7 +98,7 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Revive\baza.cs" />
+    <Compile Include="Revive\pohja.cs" />
     <Compile Include="Revive\ext.cs" />
     <Compile Include="Revive\InformationStorage.cs" />
     <Compile Include="Revive\init.cs" />

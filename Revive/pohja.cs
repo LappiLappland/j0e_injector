@@ -10,7 +10,7 @@ namespace Revive_Injector
     /// <summary>
     /// Contains basic functions
     /// </summary>
-    public static class baza
+    public static class pohja
     {
 
         public static int paramID;
@@ -24,6 +24,23 @@ namespace Revive_Injector
         private const int PBOMANAGER_LIMIT_LINES = 15;
 
         /// <summary>
+        /// ERROR - we found several missions, but conversion failed
+        /// SUCCESS - we found several missions and successed
+        /// ONE_FOLDER_SUCCESS - we ound only one mission and successed
+        /// ONE_FOLDER_ERROR - we found only one mission, but conversion failed
+        /// NOTHING - we didn't find any missions
+        /// IO_ERROR - IO threw exception
+        /// </summary>
+        public enum CONVERSION_RESULT
+        {
+            ERROR = 0,
+            SUCCESS = 1,
+            ONE_FOLDER_SUCCESS = 2,
+            ONE_FOLDER_ERROR = 3,
+            NOTHING = 4,
+            IO_ERROR = 5,
+        }
+        /// <summary>
         /// NO_REWRITE - do nothing. (Use with DEBUG_OUTPUT)
         /// REWRITE_EXISTING - rewrite files inside original folder
         /// CREATE_NEW_FOLDER - keep original files, copy them to another directory and work with it instead. Folder name [Revg-PLAYERS]Originalname
@@ -33,7 +50,6 @@ namespace Revive_Injector
         /// </summary>
         public enum REWRITE_TYPE
         {
-            NO_REWRITE = 0,
             REWRITE_EXISTING = 1,
             CREATE_NEW_FOLDER = 2,
             UNPBO_REPBO = 3,
@@ -49,14 +65,6 @@ namespace Revive_Injector
         public static REWRITE_TYPE DEBUG_REWRITE = REWRITE_TYPE.UNPBO_REPBO;
 
         /// <summary>
-        /// Does nothing
-        /// </summary>
-        public const bool DEBUG_ONEFOLDER = false;
-        /// <summary>
-        /// Create output files in txt format (Use with NO_REWRITE type)
-        /// </summary>
-        public const bool DEBUG_OUTPUT = false;
-        /// <summary>
         /// Work with each mission in separate thread
         /// </summary>
         public static bool DEBUG_ENABLE_MULTITHREAD = false;
@@ -69,11 +77,6 @@ namespace Revive_Injector
         /// Sets j0e_isPVP variable inside main.sqs
         /// </summary>
         public static bool DEBUG_ISPVP = true;
-        /// <summary>
-        /// Does nothing now
-        /// </summary>
-        public static bool DEBUG_IGNORESEMICOLONSERROR = false;
-
         /// <summary>
         /// Encoding used by OFP files
         /// </summary>
@@ -129,17 +132,9 @@ namespace Revive_Injector
         /// <param name="Text">String to write in file</param>
         public static void AddFiles(string CurrentFile, string Text)
         {
-            //This check is useless now
-            switch (DEBUG_REWRITE)
+            using (StreamWriter sw = new StreamWriter(CurrentFile, false, ANSI))
             {
-                case REWRITE_TYPE.NO_REWRITE:
-                    break;
-                default:
-                    using (StreamWriter sw = new StreamWriter(CurrentFile, false, ANSI))
-                    {
-                        sw.Write(Text);
-                    }
-                    break;
+                sw.Write(Text);
             }
         }
         /// <summary>

@@ -11,13 +11,25 @@
             this.PlayersName = PlayersName;
         }
 
+        public static bool isOldj0e(string t)
+        {
+            if (t.Contains("_j0e_players=")) return false;
+            return true;
+        }
+
         public string generateInit()
         {
-
-            Text = Text.Insert(0, "\n;===DO NOT EDIT THIS PART===\n");
-            execs();
-            makeArray();
-            Text = Text.Insert(0, "\n;===DO NOT EDIT THIS PART===\n");
+            if (!Text.Contains("_j0e_players="))
+            {
+                Text = Text.Insert(0, "\n;===DO NOT EDIT THIS PART===\n");
+                execs();
+                makeArray();
+                Text = Text.Insert(0, "\n;===DO NOT EDIT THIS PART===\n");
+            }
+            else
+            {
+                editArray();
+            }
 
             return Text;
         }
@@ -51,7 +63,25 @@
 
         }
 
+        private void editArray()
+        {
+            string classCode = "";
 
+            classCode += "_j0e_players=[";
+
+            for (int i = 0; i < PlayersName.Length; i++)
+            {
+                char end = i != (PlayersName.Length - 1) ? ',' : ']';
+                classCode += $"\"{PlayersName[i]}\"{end}";
+            }
+
+            int istart = Text.IndexOf("_j0e_players=");
+            int iend = Text.IndexOf("]", istart);
+            Text = Text.Remove(istart, iend - istart + 1);
+            Text = Text.Insert(istart, classCode);
+
+
+        }
 
 
     }

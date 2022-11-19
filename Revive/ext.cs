@@ -22,26 +22,20 @@ namespace Revive_Injector
 
         public string generateEXT()
         {
-            Respawns();
-            Params();
-            Dialog();
+
+            if (!Text.Contains("j0eText"))
+            {
+                Respawns();
+                Params();
+                Dialog();
+            }
+            else
+            {
+                int start = Text.IndexOf("=\"Revive: \";");
+                freeID = (int)char.GetNumericValue(Text[start-1]);
+            }
 
             return Text;
-        }
-
-        /// <summary>
-        /// Useless now
-        /// </summary>
-        /// <returns></returns>
-        public string isDangerousFile()
-        {
-            //Regex regex = new Regex("[^=]=[^=]( )*[^;{ ]+( )*(\n\r|\r)", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Compiled);
-            //Match matche = regex.Match(Text);
-
-            //string log = matche.Success ? $"(Line \"{matche.Value}\" at {matche.Index})" : String.Empty;
-
-            string log = String.Empty;
-            return log;
         }
 
         private void Respawns()
@@ -59,6 +53,7 @@ namespace Revive_Injector
 
         private void Params()
         {
+
             for (int i = 1; i <= 2; i++)
             {
                 if (Text.IndexOf($"TitleParam{i}", StringComparison.OrdinalIgnoreCase) == -1)

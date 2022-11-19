@@ -119,8 +119,8 @@
   </resheader>
   <data name="richTextBox1.Text" xml:space="preserve">
     <value>How to use ?
-Just select folder with missions in the main window. Every mission in the selected folder will be converted into revive.
-In the settings you can choose type of conversion:
+Just select folder with missions (or mission) in the main window. Every mission in the selected folder will be converted into revive.
+In the settings you can choose type of conversion (only for several missions):
 1) Rewrite folders - mission folders (aka unpacked pbos) will be changed. (No extra folders created) (Not recommended)
 2) Create new folders - mission folders will be converted and will be put in new "!CONVERTED" folder as folders.
 3) UNPBO and REPBO - mission pbo files will be converted and will be put in new "!CONVERTED" folder as pbos.

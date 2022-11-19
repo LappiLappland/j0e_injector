@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Windows.Forms;
 using System.IO;
+using Revive_Injector;
 
 namespace WindowsForms_revive
 {
@@ -13,7 +14,6 @@ namespace WindowsForms_revive
         public static bool st_multithread = false;
         public static bool st_brackets = true;
         public static bool st_isPVP = false;
-        //public static bool st_semi = false;
         public static int st_type = 1;
 
         public Form1()
@@ -32,7 +32,6 @@ namespace WindowsForms_revive
             st_multithread = Properties.Settings.Default.STG_multhithread;
             st_brackets = Properties.Settings.Default.STG_brackets;
             st_isPVP = Properties.Settings.Default.STG_isPVP;
-            //st_semi = Properties.Settings.Default.STG_semi;
             st_type = Properties.Settings.Default.STG_type;
 
             ToolTip toolTip = new ToolTip();
@@ -66,15 +65,8 @@ namespace WindowsForms_revive
 
         private void buttonFolder_Click(object sender, EventArgs e)
         {
-            /*if (folderBrowserDialog.ShowDialog() == DialogResult.Cancel)
-            {
-                return;
-            }
-
-            textBoxDir.Text = folderBrowserDialog.SelectedPath;*/
 
             var dlg = new FolderPicker();
-            //dlg.InputPath = textBoxDir.Text;
             if (dlg.ShowDialog(IntPtr.Zero) == true)
             {
                 textBoxDir.Text = dlg.ResultPath;
@@ -93,25 +85,49 @@ namespace WindowsForms_revive
 
 
 
-            Revive_Injector.baza.DEBUG_ENABLE_MULTITHREAD = st_multithread;
-            Revive_Injector.baza.DEBUG_REWRITE = (Revive_Injector.baza.REWRITE_TYPE)(st_type + 1);
-            Revive_Injector.baza.DEBUG_DELETE_ANY_BRACKETS = st_brackets;
-            Revive_Injector.baza.DEBUG_ISPVP = st_isPVP;
-            //Revive_Injector.baza.DEBUG_IGNORESEMICOLONSERROR = st_semi;
-            Revive_Injector.baza.FinalLog = "";
+            pohja.DEBUG_ENABLE_MULTITHREAD = st_multithread;
+            pohja.DEBUG_REWRITE = (pohja.REWRITE_TYPE)(st_type + 1);
+            pohja.DEBUG_DELETE_ANY_BRACKETS = st_brackets;
+            pohja.DEBUG_ISPVP = st_isPVP;
+            pohja.FinalLog = "";
 
-            bool status = Revive_Injector.Program.ConvertMission(textBoxDir.Text, pathToManager);
+            pohja.CONVERSION_RESULT status;
+
+            try
+            {
+                status = Revive_Injector.Program.ConvertMission(textBoxDir.Text, pathToManager);
+            }
+            catch (IOException)
+            {
+                status = pohja.CONVERSION_RESULT.IO_ERROR;
+
+                throw;
+            }
 
             System.Media.SystemSounds.Exclamation.Play();
 
-            if (status)
+            switch (status)
             {
-                MessageBox.Show("Conversion completed!", "J0e_injector", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                case pohja.CONVERSION_RESULT.ERROR:
+                    MessageBox.Show("Conversion completed, but with errors!\nCheck log.txt for more information.", "J0e_injector", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    break;
+                case pohja.CONVERSION_RESULT.SUCCESS:
+                    MessageBox.Show("Conversion completed!", "J0e_injector", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    break;
+                case pohja.CONVERSION_RESULT.ONE_FOLDER_SUCCESS:
+                    MessageBox.Show("Conversion completed!\nBackup of this mission was also created.", "J0e_injector", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    break;
+                case pohja.CONVERSION_RESULT.ONE_FOLDER_ERROR:
+                    MessageBox.Show("Conversion failed!\nCheck log.txt for more information.\nIt's inside selected mission folder.", "J0e_injector", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    break;
+                case pohja.CONVERSION_RESULT.NOTHING:
+                    MessageBox.Show("Conversion failed!\nCouldn't find any missions.", "J0e_injector", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    break;
+                case pohja.CONVERSION_RESULT.IO_ERROR:
+                    MessageBox.Show("Conversion failed!\nMake sure you don't have any mission folder opened on computer. Or make sure you have enough free space", "J0e_injector", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    break;
             }
-            else
-            {
-                MessageBox.Show("Conversion completed, but with errors!\nCheck log.txt for more information.", "J0e_injector", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-            }
+
 
         }
 

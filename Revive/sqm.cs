@@ -118,7 +118,7 @@ namespace Revive_Injector
         private void AddonsAndAuto() // Because we use houses from Nogova
         {
 
-            if (Text.Contains("\"bis_resistance\"")) return;
+            if (Text.Contains("\"bis_resistance\"")) return; //Addon we need already in use
 
             foreach (string word in new string[] { "addOns[]=", "addOnsAuto[]=" })
             {
@@ -128,7 +128,7 @@ namespace Revive_Injector
                 {
                     int startPos = Text.IndexOf('{', TextStart);
 
-                    int endPos = baza.IndexOfEnd(Text, startPos);
+                    int endPos = pohja.IndexOfEnd(Text, startPos);
 
                     int hasitem = Text.IndexOf('\"',startPos,endPos-startPos);
 
@@ -151,6 +151,13 @@ namespace Revive_Injector
         {
 
             int TextStart;
+            int i = 0;
+
+            while (Text.Contains($"pncbis{i}"))
+            {
+                playerNameID++;
+                i++;
+            }
 
             string[] searchFor = new string[]
             {
@@ -172,7 +179,7 @@ namespace Revive_Injector
                 while (TextStart != -1)
                 {
                     int classStartIndex = Text.LastIndexOf("class", TextStart);
-                    int classCloseIndex = baza.IndexOfEnd(Text, classStartIndex);
+                    int classCloseIndex = pohja.IndexOfEnd(Text, classStartIndex);
 
 
                     //We search for name of unit
@@ -223,6 +230,14 @@ namespace Revive_Injector
             if (TextStart != -1)
             {
 
+                //Mission already has apt island
+                //There shoudn't be anything on -800, 10, -800 coordinate
+                if (Text.Contains($"position[]={{{coords[0]}}};") ||
+                    Text.Contains($"position[]={{{middlePos[0]}.000000,{middlePos[1]}.000000,{middlePos[2]}.000000}};"))
+                {
+                    return;
+                }
+
                 int classStartIndex = Text.LastIndexOf("class Vehicles", TextStart, StringComparison.OrdinalIgnoreCase);
 
                 int numberOfItems = grabItems(classStartIndex);
@@ -244,7 +259,7 @@ namespace Revive_Injector
                     numberOfItems++;
                     vehiclesID++;
                 }
-                int classCloseIndex = baza.IndexOfEnd(Text, classStartIndex);
+                int classCloseIndex = pohja.IndexOfEnd(Text, classStartIndex);
                 Text = Text.Insert(classCloseIndex, classCode + "\t");
 
             }
@@ -301,7 +316,7 @@ namespace Revive_Injector
             }
 
             int classStartIndex = TextStart;
-            int classCloseIndex = baza.IndexOfEnd(Text, classStartIndex);
+            int classCloseIndex = pohja.IndexOfEnd(Text, classStartIndex);
 
 
 
@@ -325,15 +340,15 @@ namespace Revive_Injector
                 if (classPos != -1)
                 {
                     int classStart = Text.LastIndexOf("class Item", classPos);
-                    int classEnd = baza.IndexOfEnd(Text, classStart);
+                    int classEnd = pohja.IndexOfEnd(Text, classStart);
                     int classLength = classEnd - classStart;
 
                     //Insert position. Position should be always presented
                     startPos = Text.IndexOf("position[]={", classStart) + 12;
                     endPos = Text.IndexOf("};", startPos);
                     Text = Text.Remove(startPos, endPos - startPos).Insert(startPos, $"{middlePos[0]},{middlePos[1]+100},{middlePos[2]}");
-                    classCloseIndex = baza.IndexOfEnd(Text, classStartIndex); //Update it
-                    classEnd = baza.IndexOfEnd(Text, classStart); //Update it
+                    classCloseIndex = pohja.IndexOfEnd(Text, classStartIndex); //Update it
+                    classEnd = pohja.IndexOfEnd(Text, classStart); //Update it
                     classLength = classEnd - classStart; //Update it
 
                     //Marker type must be icon
@@ -343,8 +358,8 @@ namespace Revive_Injector
                     if (startPos != -1)
                     {
                         Text = Text.Remove(startPos, Text.IndexOf("\";", startPos) - startPos + 2);
-                        classCloseIndex = baza.IndexOfEnd(Text, classStartIndex); //Update it
-                        classEnd = baza.IndexOfEnd(Text, classStart); //Update it
+                        classCloseIndex = pohja.IndexOfEnd(Text, classStartIndex); //Update it
+                        classEnd = pohja.IndexOfEnd(Text, classStart); //Update it
                         classLength = classEnd - classStart; //Update it
                     }
 
@@ -355,8 +370,8 @@ namespace Revive_Injector
                     if (startPos != -1)
                     {
                         Text = Text.Remove(startPos, Text.IndexOf(";", startPos) - startPos + 2);
-                        classCloseIndex = baza.IndexOfEnd(Text, classStartIndex); //Update it
-                        classEnd = baza.IndexOfEnd(Text, classStart); //Update it
+                        classCloseIndex = pohja.IndexOfEnd(Text, classStartIndex); //Update it
+                        classEnd = pohja.IndexOfEnd(Text, classStart); //Update it
                         classLength = classEnd - classStart; //Update it
                     }
 
@@ -367,8 +382,8 @@ namespace Revive_Injector
                     if (startPos != -1)
                     {
                         Text = Text.Remove(startPos, Text.IndexOf(";", startPos) - startPos + 2);
-                        classCloseIndex = baza.IndexOfEnd(Text, classStartIndex); //Update it
-                        classEnd = baza.IndexOfEnd(Text, classStart); //Update it
+                        classCloseIndex = pohja.IndexOfEnd(Text, classStartIndex); //Update it
+                        classEnd = pohja.IndexOfEnd(Text, classStart); //Update it
                         classLength = classEnd - classStart; //Update it
                     }
 
@@ -404,15 +419,15 @@ namespace Revive_Injector
                 if (classPos != -1)
                 {
                     int classStart = Text.LastIndexOf("class Item", classPos);
-                    int classEnd = baza.IndexOfEnd(Text, classStart);
+                    int classEnd = pohja.IndexOfEnd(Text, classStart);
                     int classLength = classEnd - classStart;
 
                     //Insert marker picture. Picture should be always presented
                     startPos = Text.IndexOf("type=\"", classStart) + 6;
                     endPos = Text.IndexOf("\";", startPos);
                     Text = Text.Remove(startPos, endPos - startPos).Insert(startPos, "Marker");
-                    classCloseIndex = baza.IndexOfEnd(Text, classStartIndex); //Update it
-                    classEnd = baza.IndexOfEnd(Text, classStart); //Update it
+                    classCloseIndex = pohja.IndexOfEnd(Text, classStartIndex); //Update it
+                    classEnd = pohja.IndexOfEnd(Text, classStart); //Update it
                     classLength = classEnd - classStart; //Update it
 
                     //Marker color must be green
@@ -422,16 +437,16 @@ namespace Revive_Injector
                     {
                         endPos = Text.IndexOf("\";", startPos);
                         Text = Text.Remove(startPos, endPos - startPos).Insert(startPos, "colorName=\"ColorGreen");
-                        classCloseIndex = baza.IndexOfEnd(Text, classStartIndex); //Update it
-                        classEnd = baza.IndexOfEnd(Text, classStart); //Update it
+                        classCloseIndex = pohja.IndexOfEnd(Text, classStartIndex); //Update it
+                        classEnd = pohja.IndexOfEnd(Text, classStart); //Update it
                         classLength = classEnd - classStart; //Update it
                     }
                     //Marker color is not set... let's create it
                     else
                     {
                         Text = Text.Insert(classEnd, "\tcolorName=\"ColorGreen\";\n\t\t");
-                        classCloseIndex = baza.IndexOfEnd(Text, classStartIndex); //Update it
-                        classEnd = baza.IndexOfEnd(Text, classStart); //Update it
+                        classCloseIndex = pohja.IndexOfEnd(Text, classStartIndex); //Update it
+                        classEnd = pohja.IndexOfEnd(Text, classStart); //Update it
                         classLength = classEnd - classStart; //Update it
                     }
 
@@ -442,8 +457,8 @@ namespace Revive_Injector
                     if (startPos != -1)
                     {
                         Text = Text.Remove(startPos, Text.IndexOf("\";", startPos) - startPos + 2);
-                        classCloseIndex = baza.IndexOfEnd(Text, classStartIndex); //Update it
-                        classEnd = baza.IndexOfEnd(Text, classStart); //Update it
+                        classCloseIndex = pohja.IndexOfEnd(Text, classStartIndex); //Update it
+                        classEnd = pohja.IndexOfEnd(Text, classStart); //Update it
                         classLength = classEnd - classStart; //Update it
                     }
 
@@ -454,8 +469,8 @@ namespace Revive_Injector
                     if (startPos != -1)
                     {
                         Text = Text.Remove(startPos, Text.IndexOf(";", startPos) - startPos + 2);
-                        classCloseIndex = baza.IndexOfEnd(Text, classStartIndex); //Update it
-                        classEnd = baza.IndexOfEnd(Text, classStart); //Update it
+                        classCloseIndex = pohja.IndexOfEnd(Text, classStartIndex); //Update it
+                        classEnd = pohja.IndexOfEnd(Text, classStart); //Update it
                         classLength = classEnd - classStart; //Update it
                     }
 
@@ -466,14 +481,20 @@ namespace Revive_Injector
                     if (startPos != -1)
                     {
                         Text = Text.Remove(startPos, Text.IndexOf(";", startPos) - startPos + 2);
-                        classCloseIndex = baza.IndexOfEnd(Text, classStartIndex); //Update it
-                        classEnd = baza.IndexOfEnd(Text, classStart); //Update it
+                        classCloseIndex = pohja.IndexOfEnd(Text, classStartIndex); //Update it
+                        classEnd = pohja.IndexOfEnd(Text, classStart); //Update it
                         classLength = classEnd - classStart; //Update it
                     }
 
                     //Still have to create markers for vehicles
                     foreach (char letter in additional)
                     {
+                        //It already exists, do nothing
+                        if (Text.Contains($"name=\"{markerName}{letter}\";"))
+                        {
+                            continue;
+                        }
+
                         classCode += $"\t\tclass Item{numberOfItems}\n";
                         classCode += "\t\t{\n";
                         classCode += $"\t\t\tposition[]={{{ middlePos[0]},{ middlePos[1]},{ middlePos[2]}}};\n";
@@ -492,7 +513,7 @@ namespace Revive_Injector
                 {
                     classCode += $"\t\tclass Item{numberOfItems}\n";
                     classCode += "\t\t{\n";
-                    classCode += $"\t\t\tposition[]={{{ middlePos[0]},{ middlePos[1]},{ middlePos[2]}}};\n";
+                    classCode += $"\t\t\tposition[]={{{ middlePos[0]},{ middlePos[1] + 90 },{ middlePos[2]}}};\n";
                     classCode += $"\t\t\tcolorName=\"ColorGreen\";\n";
                     classCode += "\t\t\ttype=\"Marker\";\n";
                     classCode += $"\t\t\tname=\"{markerName}\";\n";
@@ -501,6 +522,12 @@ namespace Revive_Injector
 
                     foreach (char letter in additional)
                     {
+                        //It already exists, do nothing
+                        if (Text.Contains($"name=\"{markerName}{letter}\";"))
+                        {
+                            continue;
+                        }
+
                         classCode += $"\t\tclass Item{numberOfItems}\n";
                         classCode += "\t\t{\n";
                         classCode += $"\t\t\tposition[]={{{ middlePos[0]},{ middlePos[1]},{ middlePos[2]}}};\n";
@@ -540,6 +567,7 @@ namespace Revive_Injector
         private void GrpendAndServer()
         {
             int TextStart = Text.IndexOf("class Groups", StringComparison.OrdinalIgnoreCase);
+            int numberOfChanges = 0;
 
             //entire class Groups
             int classStartIndex = TextStart;
@@ -547,53 +575,61 @@ namespace Revive_Injector
             //Grab amount of items
             int numberOfItems = grabItems(classStartIndex);
 
-            //Swap items amount to the new one. Because we add 2 groups to the list
-            changeItems(classStartIndex, numberOfItems + 2);
-
             string classCode = "";
 
+            if (!Text.Contains("text=\"j0e_grpend\";"))
+            {
+                classCode += $"\t\tclass Item{numberOfItems}\n";
+                classCode += "\t\t{\n";
+                classCode += "\t\t\tside=\"LOGIC\";\n"; // Making sure we don't go over limit of groups
+                classCode += "\t\t\tclass Vehicles\n";
+                classCode += "\t\t\t{\n";
+                classCode += "\t\t\t\titems=1;\n";
+                classCode += $"\t\t\t\tclass Item0\n";
+                classCode += "\t\t\t\t{\n";
+                classCode += $"\t\t\t\t\tposition[]={{{ middlePos[0]},{ middlePos[1] + 100},{ middlePos[2]}}};\n";
+                classCode += $"\t\t\t\t\tid={vehiclesID};\n";
+                classCode += "\t\t\t\t\tside=\"LOGIC\";\n"; // Making sure we don't go over limit of groups
+                classCode += "\t\t\t\t\tvehicle=\"Civilian\";\n";
+                classCode += "\t\t\t\t\tleader=1;\n";
+                classCode += "\t\t\t\t\tskill=1;\n";
+                classCode += "\t\t\t\t\ttext=\"j0e_grpend\";\n";
+                classCode += "\t\t\t\t};\n";
+                classCode += "\t\t\t};\n";
+                classCode += "\t\t};\n";
+                vehiclesID++;
+                numberOfChanges++;
+            }
 
-            classCode += $"\t\tclass Item{numberOfItems}\n";
-            classCode += "\t\t{\n";
-            classCode += "\t\t\tside=\"LOGIC\";\n"; // Making sure we don't go over limit of groups
-            classCode += "\t\t\tclass Vehicles\n";
-            classCode += "\t\t\t{\n";
-            classCode += "\t\t\t\titems=1;\n";
-            classCode += $"\t\t\t\tclass Item0\n";
-            classCode += "\t\t\t\t{\n";
-            classCode += $"\t\t\t\t\tposition[]={{{ middlePos[0]},{ middlePos[1] + 100},{ middlePos[2]}}};\n";
-            classCode += $"\t\t\t\t\tid={vehiclesID};\n";
-            classCode += "\t\t\t\t\tside=\"LOGIC\";\n"; // Making sure we don't go over limit of groups
-            classCode += "\t\t\t\t\tvehicle=\"Civilian\";\n";
-            classCode += "\t\t\t\t\tleader=1;\n";
-            classCode += "\t\t\t\t\tskill=1;\n";
-            classCode += "\t\t\t\t\ttext=\"j0e_grpend\";\n";
-            classCode += "\t\t\t\t};\n";
-            classCode += "\t\t\t};\n";
-            classCode += "\t\t};\n";
-            vehiclesID++;
+            if (!Text.Contains("text=\"j0e_server\";"))
+            {
+                classCode += $"\t\tclass Item{numberOfItems + 1}\n";
+                classCode += "\t\t{\n";
+                classCode += "\t\t\tside=\"LOGIC\";\n";
+                classCode += "\t\t\tclass Vehicles\n";
+                classCode += "\t\t\t{\n";
+                classCode += "\t\t\t\titems=1;\n";
+                classCode += $"\t\t\t\tclass Item0\n";
+                classCode += "\t\t\t\t{\n";
+                classCode += $"\t\t\t\t\tposition[]={{{ middlePos[0]},{ middlePos[1]},{ middlePos[2]}}};\n";
+                classCode += $"\t\t\t\t\tid={vehiclesID};\n";
+                classCode += "\t\t\t\t\tside=\"Logic\";\n";
+                classCode += "\t\t\t\t\tvehicle=\"Logic\";\n";
+                classCode += "\t\t\t\t\tleader=1;\n";
+                classCode += "\t\t\t\t\tskill=1;\n";
+                classCode += "\t\t\t\t\ttext=\"j0e_server\";\n";
+                classCode += "\t\t\t\t};\n";
+                classCode += "\t\t\t};\n";
+                classCode += "\t\t};\n";
+                vehiclesID++;
+                numberOfChanges++;
+            }
 
-            classCode += $"\t\tclass Item{numberOfItems + 1}\n";
-            classCode += "\t\t{\n";
-            classCode += "\t\t\tside=\"LOGIC\";\n";
-            classCode += "\t\t\tclass Vehicles\n";
-            classCode += "\t\t\t{\n";
-            classCode += "\t\t\t\titems=1;\n";
-            classCode += $"\t\t\t\tclass Item0\n";
-            classCode += "\t\t\t\t{\n";
-            classCode += $"\t\t\t\t\tposition[]={{{ middlePos[0]},{ middlePos[1]},{ middlePos[2]}}};\n";
-            classCode += $"\t\t\t\t\tid={vehiclesID};\n";
-            classCode += "\t\t\t\t\tside=\"Logic\";\n";
-            classCode += "\t\t\t\t\tvehicle=\"Logic\";\n";
-            classCode += "\t\t\t\t\tleader=1;\n";
-            classCode += "\t\t\t\t\tskill=1;\n";
-            classCode += "\t\t\t\t\ttext=\"j0e_server\";\n";
-            classCode += "\t\t\t\t};\n";
-            classCode += "\t\t\t};\n";
-            classCode += "\t\t};\n";
-            vehiclesID++;
+            //Swap items amount to the new one. Because we add 2 groups to the list
+            if (numberOfChanges > 0)
+                changeItems(classStartIndex, numberOfItems + numberOfChanges);
 
-            int classCloseIndex = baza.IndexOfEnd(Text, classStartIndex);
+            int classCloseIndex = pohja.IndexOfEnd(Text, classStartIndex);
             Text = Text.Insert(classCloseIndex, classCode + "\t");
 
         }
@@ -617,9 +653,9 @@ namespace Revive_Injector
                 classCode += "\t\t\tb=5;\n";
                 classCode += "\t\t\trectangular=1;\n";
                 classCode += "\t\t\tactivationBy=\"ANY\";\n";
-                classCode += $"\t\t\ttimeoutMin={baza.MISSION_END_TIME};\n";
-                classCode += $"\t\t\ttimeoutMid={baza.MISSION_END_TIME};\n";
-                classCode += $"\t\t\ttimeoutMax={baza.MISSION_END_TIME};\n";
+                classCode += $"\t\t\ttimeoutMin={pohja.MISSION_END_TIME};\n";
+                classCode += $"\t\t\ttimeoutMid={pohja.MISSION_END_TIME};\n";
+                classCode += $"\t\t\ttimeoutMax={pohja.MISSION_END_TIME};\n";
                 classCode += "\t\t\ttype=\"END6\";\n";
                 classCode += "\t\t\tage=\"UNKNOWN\";\n";
                 classCode += "\t\t\texpCond=\"(j0e_gameis!=0)\";\n";
@@ -630,7 +666,7 @@ namespace Revive_Injector
                 classCode += "\t\t};\n";
                 classCode += "\t};\n";
 
-                baza.endID = 6;
+                pohja.endID = 6;
 
                 insertAtEnd(classCode);
 
@@ -638,9 +674,20 @@ namespace Revive_Injector
 
             else
             {
+
+                if (Text.Contains("expCond=\"(j0e_gameis!=0)\";"))
+                {
+
+                    int start = Text.IndexOf("expCond=\"(j0e_gameis!=0)\";");
+                    int end = Text.LastIndexOf("type=\"END", start);
+                    pohja.endID = Text[end+9];
+
+                    return;
+                }
+
                 //entire class Sensors
                 int classStartIndex = TextStart;
-                int classCloseIndex = baza.IndexOfEnd(Text, classStartIndex);
+                int classCloseIndex = pohja.IndexOfEnd(Text, classStartIndex);
 
                 int endID = -1;
                 //Check which endings are free
@@ -676,9 +723,9 @@ namespace Revive_Injector
                     classCode += "\t\t\tb=5;\n";
                     classCode += "\t\t\trectangular=1;\n";
                     classCode += "\t\t\tactivationBy=\"ANY\";\n";
-                    classCode += $"\t\t\ttimeoutMin={baza.MISSION_END_TIME};\n";
-                    classCode += $"\t\t\ttimeoutMid={baza.MISSION_END_TIME};\n";
-                    classCode += $"\t\t\ttimeoutMax={baza.MISSION_END_TIME};\n";
+                    classCode += $"\t\t\ttimeoutMin={pohja.MISSION_END_TIME};\n";
+                    classCode += $"\t\t\ttimeoutMid={pohja.MISSION_END_TIME};\n";
+                    classCode += $"\t\t\ttimeoutMax={pohja.MISSION_END_TIME};\n";
                     classCode += $"\t\t\ttype=\"END{endID}\";\n";
                     classCode += "\t\t\tage=\"UNKNOWN\";\n";
                     classCode += "\t\t\texpCond=\"(j0e_gameis!=0)\";\n";
@@ -690,7 +737,7 @@ namespace Revive_Injector
 
                     Text = Text.Insert(classCloseIndex, classCode);
                 }
-                baza.endID = endID;
+                pohja.endID = endID;
             }
         }
 

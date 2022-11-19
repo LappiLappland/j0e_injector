@@ -11,12 +11,6 @@ namespace Revive_Injector
         public int paramID;
         public string[] PlayersName;
         public int endID;
-
-        public InformationStorage()
-        {
-
-        }
-
     }
 
 }

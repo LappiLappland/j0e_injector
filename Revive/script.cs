@@ -16,15 +16,18 @@ namespace Revive_Injector
 
         virtual public void generateFile(string MissionFolder)
         {
-            MissionFolder += "j0e_pack\\";
+            MissionFolder = Path.Combine(MissionFolder,"j0e_pack");
             Directory.CreateDirectory(MissionFolder);
 
-            string onlyFolder = FileName.Substring(0, FileName.IndexOf('\\'));
+            string[] folders = FileName.Split('\\');
+            for (int i = 0; i < folders.Length - 1; i++)
+            {
+                string path = Path.Combine(MissionFolder, folders[i]);
+                Directory.CreateDirectory(path);
+            }
 
-            Directory.CreateDirectory(MissionFolder + onlyFolder);
-
-            baza.CreateEmptyFile(MissionFolder + FileName);
-            File.WriteAllText(MissionFolder + FileName, FileText, baza.ANSI);
+            pohja.CreateEmptyFile(Path.Combine(MissionFolder, FileName));
+            File.WriteAllText(Path.Combine(MissionFolder, FileName), FileText, pohja.ANSI);
 
         }
 
@@ -40,7 +43,6 @@ namespace Revive_Injector
             this.FileName = FileName;
             this.FileText = paramID != -1 ? FileText.Replace("%%%PARAM%%%", $"Param{paramID}") : FileText.Replace("%%%PARAM%%%", "1");
             this.FileText = isPVP ? this.FileText.Replace("%%%ISPVP%%%", "TRUE") : this.FileText.Replace("%%%ISPVP%%%", "FALSE");
-
         }
 
     }

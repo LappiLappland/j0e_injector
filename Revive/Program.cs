@@ -1,32 +1,58 @@
 using System;
 using System.IO;
 using System.Threading;
+using System.Collections.Generic;
 
 namespace Revive_Injector
 {
 
     static class Program
     {
-        public static bool ConvertMission(string currentFolder, string managerPBO)
+        public static pohja.CONVERSION_RESULT ConvertMission(string currentFolder, string managerPBO)
         {
 
-            if (baza.DEBUG_REWRITE == baza.REWRITE_TYPE.UNPBO_REPBO || baza.DEBUG_REWRITE == baza.REWRITE_TYPE.UNPBO_ONLY)
+            currentFolder = currentFolder.TrimEnd('\\');
+
+            //Create !CONVERTED folder
+            string convertedPath = Path.Combine(currentFolder, "!CONVERTED");
+            if (pohja.DEBUG_REWRITE != pohja.REWRITE_TYPE.REWRITE_EXISTING)
+                Directory.CreateDirectory(convertedPath);
+
+            string[] Directories = { };
+
+            //UNPBO files, if need
+            if (pohja.DEBUG_REWRITE == pohja.REWRITE_TYPE.UNPBO_REPBO || pohja.DEBUG_REWRITE == pohja.REWRITE_TYPE.UNPBO_ONLY)
             {
 
-                baza.Unpbo(currentFolder, managerPBO);
+                DirectoryInfo cF = new DirectoryInfo(currentFolder);
+                FileInfo[] PBOs = cF.GetFiles("*.pbo");
+
+                List<string> PBOd = new List<string>();
+
+                foreach  (FileInfo f in PBOs)
+                {
+                    PBOd.Add(Path.Combine(f.DirectoryName,Path.GetFileNameWithoutExtension(f.FullName)));
+                }
+
+                Directories = PBOd.ToArray();
+
+                pohja.Unpbo(currentFolder, managerPBO);
 
             }
+            else
+            {
+                Directories = Directory.GetDirectories(currentFolder);
+            }
 
-            string[] Directories = Directory.GetDirectories(currentFolder);
-
-            if (baza.DEBUG_ENABLE_MULTITHREAD)
+            //Convert missions
+            if (pohja.DEBUG_ENABLE_MULTITHREAD)
             {
                 Thread[] threads = new Thread[Directories.Length];
                 int i = 0;
                 foreach (string DIRECTORY in Directories)
                 {
 
-                    threads[i] = new Thread(() => DoWork(DIRECTORY, currentFolder, new InformationStorage()));
+                    threads[i] = new Thread(() => ConvertMissionInFolder(DIRECTORY, currentFolder));
                     threads[i].Start();
                     i++;
                 }
@@ -45,17 +71,55 @@ namespace Revive_Injector
                 foreach (string DIRECTORY in Directories)
                 {
                     Console.WriteLine(DIRECTORY);
-                    DoWork(DIRECTORY, currentFolder, new InformationStorage());
+                    ConvertMissionInFolder(DIRECTORY, currentFolder);
                 }
             }
 
-            Directory.CreateDirectory(currentFolder + "\\!CONVERTED");
-
-            if (baza.DEBUG_REWRITE == baza.REWRITE_TYPE.REPBO_ONLY || baza.DEBUG_REWRITE == baza.REWRITE_TYPE.UNPBO_REPBO)
+            //Nothing was converted
+            //Maybe user selected mission folder?
+            //Try to convert it instead
+            if (pohja.FinalLog == String.Empty)
             {
-                string[] DirectoriesConv = Directory.GetDirectories(currentFolder + "\\!CONVERTED");
+                //No, he didn't
+                if (!File.Exists(Path.Combine(currentFolder,"mission.sqm")))
+                {
+                    return pohja.CONVERSION_RESULT.NOTHING;
+                }
 
-                baza.Repbo(currentFolder + "\\!CONVERTED", managerPBO);
+                pohja.DEBUG_REWRITE = pohja.REWRITE_TYPE.REWRITE_EXISTING;
+
+                //We want to create backup of mission
+                string fol = Path.GetDirectoryName(currentFolder);
+                string mis = Path.GetFileName(currentFolder) + ".backup";
+                string backupFolder = Path.Combine(fol, mis);
+                if (Directory.Exists(backupFolder)) Directory.Delete(backupFolder, true);
+                Directory.CreateDirectory(backupFolder);
+                pohja.CopyDirectory(currentFolder, backupFolder, true);
+
+                bool result = ConvertMissionInFolder(currentFolder, currentFolder);
+
+                //Conversion failed. Turn backup into original
+                if (!result)
+                {
+                    Directory.Delete(currentFolder, true);
+                    Directory.Move(backupFolder, currentFolder);
+                    using (StreamWriter sw = new StreamWriter(Path.Combine(currentFolder, "!Log.txt"), false))
+                    {
+                        sw.Write(pohja.FinalLog);
+                    }
+                    return pohja.CONVERSION_RESULT.ONE_FOLDER_ERROR;
+                }
+
+
+                return pohja.CONVERSION_RESULT.ONE_FOLDER_SUCCESS;
+            }
+
+            //Repbo folders, if need
+            if (pohja.DEBUG_REWRITE == pohja.REWRITE_TYPE.REPBO_ONLY || pohja.DEBUG_REWRITE == pohja.REWRITE_TYPE.UNPBO_REPBO)
+            {
+                string[] DirectoriesConv = Directory.GetDirectories(convertedPath);
+
+                pohja.Repbo(convertedPath, managerPBO);
 
                 foreach (string dir in DirectoriesConv)
                 {
@@ -63,144 +127,151 @@ namespace Revive_Injector
                 }
             }
 
-            using (StreamWriter sw = new StreamWriter(currentFolder + "\\!CONVERTED\\!Log.txt", false))
+            //Create log file
+            string logPath = 
+                pohja.DEBUG_REWRITE != pohja.REWRITE_TYPE.REWRITE_EXISTING ? 
+                Path.Combine(convertedPath, "!Log.txt") : Path.Combine(currentFolder, "!Log.txt");
+
+            using (StreamWriter sw = new StreamWriter(logPath, false))
             {
-                sw.Write(baza.FinalLog);
+                sw.Write(pohja.FinalLog);
             }
 
-            if (baza.FinalLog.Contains("Conversion failed"))
+            //Report status
+            if (pohja.FinalLog.Contains("Conversion failed"))
             {
-                return false;
+                return pohja.CONVERSION_RESULT.ERROR;
             }
             else
             {
-                return true;
+                return pohja.CONVERSION_RESULT.SUCCESS;
             }
 
         }
 
-        private static void DoWork(string DIRECTORY, string currentFolder, InformationStorage IFbaza)
+        private static bool ConvertMissionInFolder(string DIRECTORY, string currentFolder)
         {
 
-            string MissionFolder = DIRECTORY + '\\';
-            string MissionFolderOld = MissionFolder;
+            string MissionFolder = DIRECTORY;
+            InformationStorage IFbaza = new InformationStorage();
 
-            if (!File.Exists(MissionFolder + "mission.sqm"))
+            if (!File.Exists(Path.Combine(MissionFolder, "mission.sqm")))
             {
-                return;
+                return false;
             }
 
-            string alreadyHasRevive = sqm.checkRevive(File.ReadAllText(MissionFolder + "mission.sqm"));
-            string mis = DIRECTORY.Remove(0, DIRECTORY.LastIndexOf('\\') + 1);
+            //Check if there is already revive in the mission
+            string alreadyHasRevive = sqm.checkRevive(File.ReadAllText(Path.Combine(MissionFolder, "mission.sqm")));
+            string mis = Path.GetFileName(MissionFolder); //Mission name
 
             if (alreadyHasRevive.Length > 0)
             {
-                baza.FinalLog += $"Mission {mis}: Conversion failed. Error - mission.sqm already has revive. ({alreadyHasRevive})\n";
-                
-                if (baza.DEBUG_REWRITE != baza.REWRITE_TYPE.REWRITE_EXISTING) Directory.Delete(MissionFolder, true);
-                return;
-            }
-
-            if (baza.DEBUG_REWRITE == baza.REWRITE_TYPE.CREATE_NEW_FOLDER || baza.DEBUG_REWRITE == baza.REWRITE_TYPE.UNPBO_REPBO || baza.DEBUG_REWRITE == baza.REWRITE_TYPE.UNPBO_ONLY || baza.DEBUG_REWRITE == baza.REWRITE_TYPE.REPBO_ONLY)
-            {
-                int end = MissionFolder.LastIndexOf('\\');
-                int start = MissionFolder.LastIndexOf('\\', end - 1);
-                string newMissionFolder = MissionFolder;
-
-                if (baza.DEBUG_DELETE_ANY_BRACKETS)
+                if (alreadyHasRevive != "j0e")
                 {
-                    int startPos = MissionFolder.IndexOf('[',start);
-                    int endPos = MissionFolder.IndexOf(']', start);
-                    if (startPos != -1 && endPos != -1)
-                    {
-                        newMissionFolder = MissionFolder.Remove(startPos, endPos-startPos+1);
-                    }
-                }
-
-                newMissionFolder = newMissionFolder.Insert(start + 1, "%%%REPLACE%%%");
-
-                if (baza.DEBUG_REWRITE == baza.REWRITE_TYPE.CREATE_NEW_FOLDER || baza.DEBUG_REWRITE == baza.REWRITE_TYPE.REPBO_ONLY)
-                {
-                    Directory.CreateDirectory(newMissionFolder);
-                    baza.CopyDirectory(MissionFolder, newMissionFolder, true);
+                    pohja.FinalLog += $"Mission {mis}: Conversion failed. Error - mission.sqm already has revive. ({alreadyHasRevive})\n";
+                    return false;
                 }
                 else
                 {
-                    Directory.Move(MissionFolder, newMissionFolder);
-                }
-                MissionFolder = newMissionFolder;
+                    if (!File.Exists(Path.Combine(MissionFolder, "init.sqs")) || init.isOldj0e(File.ReadAllText(Path.Combine(MissionFolder, "init.sqs"))))
+                    {
+                        //Delete folders from UNPBO
+                        if (pohja.DEBUG_REWRITE == pohja.REWRITE_TYPE.UNPBO_ONLY ||
+                            pohja.DEBUG_REWRITE == pohja.REWRITE_TYPE.UNPBO_REPBO)
+                        {
+                            Directory.Delete(MissionFolder, true);
+                        }
+
+                        pohja.FinalLog += $"Mission {mis}: Conversion failed. Error - mission.sqm already has revive. (old version of j0e, remove j0e script manually and try again)\n";
+                        return false;
+                    }
+                } 
             }
 
+            //Create new directory for mission
+            int start = MissionFolder.LastIndexOf('\\');
+            string newMissionFolder = MissionFolder;
 
-            mission mission = new mission(MissionFolder, MissionFolderOld, IFbaza);
+            //Remove brackets
+            if (pohja.DEBUG_DELETE_ANY_BRACKETS)
+            {
+                int startPos = MissionFolder.IndexOf('[',start);
+                int endPos = MissionFolder.IndexOf(']', start);
+                if (startPos != -1 && endPos != -1)
+                {
+                    newMissionFolder = MissionFolder.Remove(startPos, endPos-startPos+1);
+                }
+            }
+
+            newMissionFolder = newMissionFolder.Insert(start + 1, "%%%REPLACE%%%");
+
+            if (pohja.DEBUG_REWRITE == pohja.REWRITE_TYPE.CREATE_NEW_FOLDER || 
+                pohja.DEBUG_REWRITE == pohja.REWRITE_TYPE.REPBO_ONLY ||
+                pohja.DEBUG_REWRITE == pohja.REWRITE_TYPE.REWRITE_EXISTING)
+            {
+                Directory.CreateDirectory(newMissionFolder);
+                pohja.CopyDirectory(MissionFolder, newMissionFolder, true);
+            }
+            else
+            {
+                Directory.Move(MissionFolder, newMissionFolder);
+            }
+
+            MissionFolder = newMissionFolder;
+
+            //Create and edit all the neccessary files
+            mission mission = new mission(MissionFolder, IFbaza);
             string log = "";
-
             try
             {
-                log = mission.doWork();
+                log = mission.Convert();
             }
             catch //Delete temp folder if program crashes
             {
-                if (baza.DEBUG_REWRITE != baza.REWRITE_TYPE.REWRITE_EXISTING)
+
+                if (Directory.Exists(MissionFolder))
                 {
                     Directory.Delete(MissionFolder, true);
                 }
 
+                pohja.FinalLog += $"Mission {mis}: Conversion failed. Error - unknown error. (Please report)\n";
 
-                baza.FinalLog += $"Mission {mis}: Conversion failed. Error - unknown error. (Please report)\n";
-
-                return;
+                return false;
             }
 
             if (!log.Contains("Conversion failed"))
             {
-                if (baza.DEBUG_REWRITE == baza.REWRITE_TYPE.CREATE_NEW_FOLDER || baza.DEBUG_REWRITE == baza.REWRITE_TYPE.UNPBO_REPBO || baza.DEBUG_REWRITE == baza.REWRITE_TYPE.REPBO_ONLY || baza.DEBUG_REWRITE == baza.REWRITE_TYPE.UNPBO_ONLY)
+
+                if (pohja.DEBUG_REWRITE == pohja.REWRITE_TYPE.REWRITE_EXISTING)
                 {
-
-                    Directory.CreateDirectory(currentFolder + "\\!CONVERTED");
-
-                    string newName = MissionFolder.Replace("%%%REPLACE%%%", $"[Revg-{IFbaza.PlayersName.Length}]");
-
-                    newName = newName.Insert(newName.IndexOf("[Revg-"), "!CONVERTED\\");
-
-                    if (baza.DEBUG_ISPVP) newName = newName.Insert(newName.IndexOf("[Revg-")+5, "p" );
-
-
-                    if (!Directory.Exists(newName))
-                    {
-                        Directory.Move(MissionFolder, newName);
-
-                        //if (baza.DEBUG_REWRITE == baza.REWRITE_TYPE.UNPBO_REPBO || baza.DEBUG_REWRITE == baza.REWRITE_TYPE.REPBO_ONLY)
-                        //{
-
-                            //baza.Repbo(currentFolder + "\\!CONVERTED", managerPBO, newName);
-
-                            //Directory.Delete(newName, true);
-
-                        //}
-
-                    }
-                    else
-                    {
-                        Directory.Delete(MissionFolder, true);
-                        mis = DIRECTORY.Remove(0, DIRECTORY.LastIndexOf('\\') + 1);
-                        log = $"Mission {mis}: Conversion failed. Error - mission folder already exists in !CONVERTED.";
-
-                    }
+                    Directory.Delete(MissionFolder.Replace("%%%REPLACE%%%", String.Empty), true);
                 }
+
+                string newName = MissionFolder.Replace("%%%REPLACE%%%", $"[Revg-{IFbaza.PlayersName.Length}]");
+
+                if (pohja.DEBUG_REWRITE != pohja.REWRITE_TYPE.REWRITE_EXISTING) 
+                    newName = newName.Insert(newName.IndexOf("[Revg-"), @"!CONVERTED\");
+
+                if (pohja.DEBUG_ISPVP) 
+                    newName = newName.Insert(newName.IndexOf("[Revg-")+5, "p" );
+
+                if (Directory.Exists(newName))
+                {
+                    Directory.Delete(newName, true);
+                }
+
+                Directory.Move(MissionFolder, newName);
+
             }
             else
             {
-                if (baza.DEBUG_REWRITE != baza.REWRITE_TYPE.REWRITE_EXISTING)
-                {
-                    Directory.Delete(MissionFolder, true);
-                }
+                Directory.Delete(MissionFolder, true);
             }
 
-            baza.FinalLog += log + '\n';
+            pohja.FinalLog += log.Replace("%%%MIS%%%", mis) + '\n';
 
+            return true;
         }
-
 
     }
 

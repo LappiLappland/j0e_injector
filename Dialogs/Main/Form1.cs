@@ -100,8 +100,6 @@ namespace WindowsForms_revive
             catch (IOException)
             {
                 status = pohja.CONVERSION_RESULT.IO_ERROR;
-
-                throw;
             }
 
             System.Media.SystemSounds.Exclamation.Play();
@@ -124,7 +122,7 @@ namespace WindowsForms_revive
                     MessageBox.Show("Conversion failed!\nCouldn't find any missions.", "J0e_injector", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     break;
                 case pohja.CONVERSION_RESULT.IO_ERROR:
-                    MessageBox.Show("Conversion failed!\nMake sure you don't have any mission folder opened on computer. Or make sure you have enough free space", "J0e_injector", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Conversion failed!\nMake sure you don't have any mission folder opened on computer.\nAnd make sure you have enough free space", "J0e_injector", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     break;
             }
 

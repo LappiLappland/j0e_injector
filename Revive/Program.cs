@@ -13,11 +13,6 @@ namespace Revive_Injector
 
             currentFolder = currentFolder.TrimEnd('\\');
 
-            //Create !CONVERTED folder
-            string convertedPath = Path.Combine(currentFolder, "!CONVERTED");
-            if (pohja.DEBUG_REWRITE != pohja.REWRITE_TYPE.REWRITE_EXISTING)
-                Directory.CreateDirectory(convertedPath);
-
             string[] Directories = { };
 
             //UNPBO files, if need
@@ -114,6 +109,11 @@ namespace Revive_Injector
                 return pohja.CONVERSION_RESULT.ONE_FOLDER_SUCCESS;
             }
 
+            //Create !CONVERTED folder
+            string convertedPath = Path.Combine(currentFolder, "!CONVERTED");
+            if (pohja.DEBUG_REWRITE != pohja.REWRITE_TYPE.REWRITE_EXISTING)
+                Directory.CreateDirectory(convertedPath);
+
             //Repbo folders, if need
             if (pohja.DEBUG_REWRITE == pohja.REWRITE_TYPE.REPBO_ONLY || pohja.DEBUG_REWRITE == pohja.REWRITE_TYPE.UNPBO_REPBO)
             {
@@ -192,17 +192,6 @@ namespace Revive_Injector
             int start = MissionFolder.LastIndexOf('\\');
             string newMissionFolder = MissionFolder;
 
-            //Remove brackets
-            if (pohja.DEBUG_DELETE_ANY_BRACKETS)
-            {
-                int startPos = MissionFolder.IndexOf('[',start);
-                int endPos = MissionFolder.IndexOf(']', start);
-                if (startPos != -1 && endPos != -1)
-                {
-                    newMissionFolder = MissionFolder.Remove(startPos, endPos-startPos+1);
-                }
-            }
-
             newMissionFolder = newMissionFolder.Insert(start + 1, "%%%REPLACE%%%");
 
             if (pohja.DEBUG_REWRITE == pohja.REWRITE_TYPE.CREATE_NEW_FOLDER || 
@@ -242,12 +231,30 @@ namespace Revive_Injector
             if (!log.Contains("Conversion failed"))
             {
 
+                //Create !CONVERTED folder
+                string convertedPath = Path.Combine(currentFolder, "!CONVERTED");
+                if (pohja.DEBUG_REWRITE != pohja.REWRITE_TYPE.REWRITE_EXISTING)
+                    Directory.CreateDirectory(convertedPath);
+
                 if (pohja.DEBUG_REWRITE == pohja.REWRITE_TYPE.REWRITE_EXISTING)
                 {
                     Directory.Delete(MissionFolder.Replace("%%%REPLACE%%%", String.Empty), true);
                 }
 
-                string newName = MissionFolder.Replace("%%%REPLACE%%%", $"[Revg-{IFbaza.PlayersName.Length}]");
+                string newName = MissionFolder;
+
+                //Remove brackets
+                if (pohja.DEBUG_DELETE_ANY_BRACKETS)
+                {
+                    int startPos = MissionFolder.IndexOf('[', start);
+                    int endPos = MissionFolder.IndexOf(']', start);
+                    if (startPos != -1 && endPos != -1)
+                    {
+                        newName = MissionFolder.Remove(startPos, endPos - startPos + 1);
+                    }
+                }
+
+                newName = newName.Replace("%%%REPLACE%%%", $"[Revg-{IFbaza.PlayersName.Length}]");
 
                 if (pohja.DEBUG_REWRITE != pohja.REWRITE_TYPE.REWRITE_EXISTING) 
                     newName = newName.Insert(newName.IndexOf("[Revg-"), @"!CONVERTED\");

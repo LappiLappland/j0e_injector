@@ -30,6 +30,7 @@ namespace Revive_Injector
         /// ONE_FOLDER_ERROR - we found only one mission, but conversion failed
         /// NOTHING - we didn't find any missions
         /// IO_ERROR - IO threw exception
+        /// ACCESS - User opened folder :/
         /// </summary>
         public enum CONVERSION_RESULT
         {
@@ -39,6 +40,7 @@ namespace Revive_Injector
             ONE_FOLDER_ERROR = 3,
             NOTHING = 4,
             IO_ERROR = 5,
+            ACCESS = 6,
         }
         /// <summary>
         /// NO_REWRITE - do nothing. (Use with DEBUG_OUTPUT)

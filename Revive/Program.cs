@@ -91,7 +91,16 @@ namespace Revive_Injector
                 Directory.CreateDirectory(backupFolder);
                 pohja.CopyDirectory(currentFolder, backupFolder, true);
 
-                bool result = ConvertMissionInFolder(currentFolder, currentFolder);
+                bool result;
+
+                try
+                {
+                    result = ConvertMissionInFolder(currentFolder, currentFolder);
+                }
+                catch
+                {
+                    return pohja.CONVERSION_RESULT.ACCESS;
+                }
 
                 //Conversion failed. Turn backup into original
                 if (!result)

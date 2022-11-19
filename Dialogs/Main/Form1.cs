@@ -101,6 +101,10 @@ namespace WindowsForms_revive
             {
                 status = pohja.CONVERSION_RESULT.IO_ERROR;
             }
+            catch (UnauthorizedAccessException)
+            {
+                status = pohja.CONVERSION_RESULT.ACCESS;
+            }
 
             System.Media.SystemSounds.Exclamation.Play();
 
@@ -123,6 +127,9 @@ namespace WindowsForms_revive
                     break;
                 case pohja.CONVERSION_RESULT.IO_ERROR:
                     MessageBox.Show("Conversion failed!\nMake sure you don't have any mission folder opened on computer.\nAnd make sure you have enough free space", "J0e_injector", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    break;
+                case pohja.CONVERSION_RESULT.ACCESS:
+                    MessageBox.Show("Conversion failed!\nMake sure you don't have any mission folder opened on computer.\nRemove folders named %%%REPLACE%%% manually and try again.", "J0e_injector", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     break;
             }
 

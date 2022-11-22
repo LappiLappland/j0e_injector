@@ -16,7 +16,8 @@ It also requires **.NET Framework 4.7.2** (or higher)
 This App is extremely easy to use!
 
 > Note 1: It will be very difficult to remove revive from mission after it was converted.
-> Note 2: You can update injected missions.
+
+> Note 2: You can update missions that already have j0e_revive.
 
  1. Select **folder with missions** or **mission folder itself** to convert. 
  You can do this by either inserting path by yourself, or by pressing *"Folder"* button to open folder using Windows Explorer.

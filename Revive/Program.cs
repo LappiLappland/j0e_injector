@@ -162,7 +162,8 @@ namespace Revive_Injector
         {
 
             string MissionFolder = DIRECTORY;
-            InformationStorage IFbaza = new InformationStorage();
+            InformationStorage IFstor = new InformationStorage();
+            string mis = Path.GetFileName(MissionFolder); //Mission name
 
             if (!File.Exists(Path.Combine(MissionFolder, "mission.sqm")))
             {
@@ -170,31 +171,16 @@ namespace Revive_Injector
             }
 
             //Check if there is already revive in the mission
-            string alreadyHasRevive = sqm.checkRevive(File.ReadAllText(Path.Combine(MissionFolder, "mission.sqm")));
-            string mis = Path.GetFileName(MissionFolder); //Mission name
 
-            if (alreadyHasRevive.Length > 0)
+            IFstor.revive = Mission.CheckRevive(MissionFolder);
+
+            Console.WriteLine(IFstor.revive.ToString());
+
+            if (IFstor.revive == pohja.MISSION_REVIVE.Kegetys ||
+                IFstor.revive == pohja.MISSION_REVIVE.Zigo)
             {
-                if (alreadyHasRevive != "j0e")
-                {
-                    pohja.FinalLog += $"Mission {mis}: Conversion failed. Error - mission.sqm already has revive. ({alreadyHasRevive})\n";
-                    return false;
-                }
-                else
-                {
-                    if (!File.Exists(Path.Combine(MissionFolder, "init.sqs")) || init.isOldj0e(File.ReadAllText(Path.Combine(MissionFolder, "init.sqs"))))
-                    {
-                        //Delete folders from UNPBO
-                        if (pohja.DEBUG_REWRITE == pohja.REWRITE_TYPE.UNPBO_ONLY ||
-                            pohja.DEBUG_REWRITE == pohja.REWRITE_TYPE.UNPBO_REPBO)
-                        {
-                            Directory.Delete(MissionFolder, true);
-                        }
-
-                        pohja.FinalLog += $"Mission {mis}: Conversion failed. Error - mission.sqm already has revive. (old version of j0e, remove j0e script manually and try again)\n";
-                        return false;
-                    }
-                } 
+                pohja.FinalLog += $"Mission {mis}: Conversion failed. Error - mission.sqm already has revive. ({IFstor.revive})\n";
+                return false;
             }
 
             //Create new directory for mission
@@ -218,7 +204,7 @@ namespace Revive_Injector
             MissionFolder = newMissionFolder;
 
             //Create and edit all the neccessary files
-            mission mission = new mission(MissionFolder, IFbaza);
+            Mission mission = new Mission(MissionFolder, IFstor);
             string log = "";
             try
             {
@@ -232,7 +218,7 @@ namespace Revive_Injector
                     Directory.Delete(MissionFolder, true);
                 }
 
-                pohja.FinalLog += $"Mission {mis}: Conversion failed. Error - unknown error. (Please report)\n";
+                pohja.FinalLog += $"Mission {mis}: Conversion failed. Error - unknown error. (Please report this mission)\n";
 
                 return false;
             }
@@ -263,7 +249,7 @@ namespace Revive_Injector
                     }
                 }
 
-                newName = newName.Replace("%%%REPLACE%%%", $"[Revg-{IFbaza.PlayersName.Length}]");
+                newName = newName.Replace("%%%REPLACE%%%", $"[Revg-{IFstor.PlayersName.Length}]");
 
                 if (pohja.DEBUG_REWRITE != pohja.REWRITE_TYPE.REWRITE_EXISTING) 
                     newName = newName.Insert(newName.IndexOf("[Revg-"), @"!CONVERTED\");

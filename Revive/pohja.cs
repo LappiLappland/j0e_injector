@@ -23,6 +23,15 @@ namespace Revive_Injector
         public const int MISSION_END_TIME = 10;
         private const int PBOMANAGER_LIMIT_LINES = 15;
 
+        public enum MISSION_REVIVE
+        {
+            NONE = 0,
+            j0e = 1,
+            old_j0e = 2,
+            Kegetys = 3,
+            Zigo = 4,
+        }
+
         /// <summary>
         /// ERROR - we found several missions, but conversion failed
         /// SUCCESS - we found several missions and successed

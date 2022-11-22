@@ -1,10 +1,19 @@
-﻿namespace Revive_Injector
+﻿using System.Text.RegularExpressions;
+
+namespace Revive_Injector
 {
     class init
     {
 
         private string Text;
         private string[] PlayersName;
+
+        private string[] scripts =
+        {
+            @"j0e_pack\revive\main.sqs",
+            @"j0e_pack\miss\cltrig.sqs",
+        };
+
         public init(string Text, string[] PlayersName)
         {
             this.Text = Text;
@@ -17,19 +26,19 @@
             return true;
         }
 
-        public string generateInit()
+        public string generateInit(pohja.MISSION_REVIVE revive)
         {
-            if (!Text.Contains("_j0e_players="))
-            {
-                Text = Text.Insert(0, "\n;===DO NOT EDIT THIS PART===\n");
-                execs();
-                makeArray();
-                Text = Text.Insert(0, "\n;===DO NOT EDIT THIS PART===\n");
-            }
-            else
+            if (revive == pohja.MISSION_REVIVE.j0e)
             {
                 editArray();
+                return Text;
             }
+
+            if (revive == pohja.MISSION_REVIVE.old_j0e) clearOld();
+            Text = Text.Insert(0, "\n;===DO NOT EDIT THIS PART===\n");
+            execs();
+            makeArray();
+            Text = Text.Insert(0, "\n;===DO NOT EDIT THIS PART===\n");
 
             return Text;
         }
@@ -83,6 +92,22 @@
 
         }
 
+        private void clearOld()
+        {
+            int start = Text.IndexOf("j0e_players", System.StringComparison.OrdinalIgnoreCase);
+            int end = Text.IndexOf(']', start);
+
+            Text = Text.Remove(start, end - start + 1);
+
+            foreach (string str in scripts)
+            {
+                string pattern = string.Format(".+( )+exec( )+({{|\")({0})(}}|\")", Regex.Escape(str));
+                Regex regex = new Regex(pattern, RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+                Text = regex.Replace(Text, string.Empty);
+            }
+
+        }
 
     }
 }

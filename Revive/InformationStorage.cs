@@ -3,14 +3,14 @@ namespace Revive_Injector
 {
 
     /// <summary>
-    /// Stores information about paramID, endID, PlayersName.
-    /// Because it's unique for every mission.
+    /// Stores unique mission information.
     /// </summary>
     public class InformationStorage
     {
-        public int paramID;
+        public int paramID = -1;
         public string[] PlayersName;
         public int endID;
+        public pohja.MISSION_REVIVE revive;
     }
 
 }

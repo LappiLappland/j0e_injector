@@ -35,6 +35,7 @@ You must press *"Accept Changes"* button to save settings.
 This will define the way of saving.
 
  > *MISSION FOLDER* - unpacked mission. (Folder with mission.sqm)
+ > 
  > *MISSION PBO* - packed mission. (File in PBO format)
 
  1. Convert one mission (*Unlisted*)

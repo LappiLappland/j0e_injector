@@ -98,7 +98,13 @@ If there isn't that many missions, conversion will be slowed down.
 
 ***ONLY USE THIS FOR REALLY HUGE AMOUNT OF MISSIONS.***
 ***YOU DON'T NEED IT OTHERWISE.***
+### Revive distance in 2D
 
+By default distance is calculated in 3D space, so distance between body and reviver height is included.
+This may cause big problems if body appears in the air (or somewhere unreachable, like a tree) making player permamently dead.
+
+2D distance ignores height difference allowing to revive people stuck in the air as long as you stay under them.
+This may also create problem if body appears on the roof of a building, because player on the first floor can revive that body.
 
 ## j0e_revive modifications
 This app uses modified version of j0e_revive.
@@ -108,14 +114,15 @@ Here are some changes:
  1. Revive body is created on the exact coordinates of death. (Including height)
  This also means your body can be spawned inside buildings.
  2. If revive body is created on the sea, it will be moved to the closest land.
- 3. Bots are allowed, but they get deleted after death.
- 4. Grenades from mods don't get deleted after death.
- 5. Captive problem in some mods is fixed.
- 6. Spectating is smoother.
- 7. Spectating has new *"S"* option. It sets *smoothness* of camera.
- 8. Spectating has bigger limits for camera options.
- 9. Spectating has no delay when switching between players.
- 10. Spectating shows player status. (Dead or Bot)
- 11. Spectating shows player vehicle. (Class name)
+ 3. Dead player doesn't turn into body if his corpse is still moving.
+ 4. Bots are allowed, but they get deleted after death.
+ 5. Grenades from mods don't get deleted after death.
+ 6. Captive problem in some mods is fixed.
+ 7. Spectating is smoother.
+ 8. Spectating has new *"S"* option. It sets *smoothness* of camera.
+ 9. Spectating has bigger limits for camera options.
+ 10. Spectating has no delay when switching between players.
+ 11. Spectating shows player status. (Dead or Bot)
+ 12. Spectating shows player vehicle. (Class name)
 10. Spectating shows player seat in vehicle. (Commander, Driver, Gunner, Cargo)
 11. Spectating shows amount of players alive.

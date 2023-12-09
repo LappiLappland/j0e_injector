@@ -32,6 +32,8 @@
 j0e_giveNade = {private["_i","_give","_last"];_i=0;_last="";_give=[];while{_i<count _this}do{if(_this select _i!=_last)then{if("_x==_this select _i"count(magazines player)!="_x==_this select _i"count _this)then{_give=_give+[_this select _i]};_last=_this select _i;};_i=_i+1;};_give}
 ;//Find closest land position
 j0e_findLand = {private["_pos","_thing","_thing2","_differ","_itter","_posi","_a","_z","_x","_y"];_pos = _this;_thing = "Barrel1" camCreate [_pos select 0, _pos select 1, -500];_thing2 = "PipeBomb" camCreate [_pos select 0, _pos select 1, -500];_thing setPos [_pos select 0, _pos select 1, 0];_thing2 setPosASL [_pos select 0, _pos select 1, 0];_differ=1;_itter=1;_posi = getPos _thing;_a=0;_z = 0;while {_z < 5} do{if ( _a == 0 )then{ _x=_differ;_y=0;};if ( _a == 1 )then{ _x=_differ;_y=_differ;};if ( _a == 2 )then{ _x=0;_y=_differ;};if ( _a == 3 )then{ _x=-_differ;_y=-_differ;};if ( _a == 4 )then{ _x=0;_y=-_differ;};if ( _a == 5 )then{ _x=-_differ;_y=_differ;};if ( _a == 6 )then{ _x=_differ;_y=-_differ;};if ( _a == 7 )then{ _x=-_differ;_y=0;};_thing setPos [(_posi select 0)+_x*_itter,(_posi select 1)+_y*_itter,0];_thing2 setPosASL [(_posi select 0)+_x*_itter,(_posi select 1)+_y*_itter,0];_z = (getPosASL _thing select 2)-(getPosASL _thing2 select 2);_a = _a + 1;_itter=_itter+1;if ( _itter > 100 )then{ _differ = 5};if ( _itter > 500 )then{ _differ = 10};if ( _itter > 1000 )then{ _differ = 100};if ( _itter > 5000 )then{ _z = 10; _thing setPosASL [-5936,0,0];};if ( _a > 7 )then{ _a = 0};};_pos = getPosASL _thing;"deleteVehicle _x" forEach [_thing, _thing2];_pos}
+;//Find distance in 2D
+j0e_distance = {sqrt((((_this select 1) select 0) - ((_this select 0) select 0))*(((_this select 1) select 0) - ((_this select 0) select 0))+(((_this select 1) select 1)-((_this select 0) select 1))*(((_this select 1) select 1)-((_this select 0) select 1)))}
 _reviveType = %%%PARAM%%%
 j0e_isPVP = %%%ISPVP%%%
 j0e_fwstat=FALSE
@@ -225,7 +227,7 @@ _ms=(Format ["%1",_un])
 ?!(Alive _un):GoTo "NextRevive"
 _ms=(TypeOf _un)
 ?(_reviveType==4)&&!(_ms In ["SoldierWMedic","SoldierEMedic","SoldierGMedic"]):GoTo "NextRevive"
-?(_un Distance _dumy)<2.5:_revpst=_revpst+1;_k=_i
+?(%%%DISTANCE_TYPE%%%)<2.5:_revpst=_revpst+1;_k=_i
 ?_revpst>6:GoTo "ReviveMe"
 #NextRevive
 _i=_i+1

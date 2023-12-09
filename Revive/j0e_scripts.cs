@@ -23,7 +23,7 @@ namespace Revive_Injector
             new script(@"revive\bodies.sqs",pohja.ReadSQS(@"revive\bodies.sqs")),
             new script(@"revive\camdlg.sqs",pohja.ReadSQS(@"revive\camdlg.sqs")),
             new script(@"revive\climnu.sqs",pohja.ReadSQS(@"revive\climnu.sqs")),
-            new scriptRevive(@"revive\main.sqs", paramID, pohja.DEBUG_ISPVP,pohja.ReadSQS(@"revive\main.sqs")),
+            new scriptRevive(@"revive\main.sqs", paramID, pohja.DEBUG_ISPVP, pohja.DEBUG_ISDISTANCE2D, pohja.ReadSQS(@"revive\main.sqs")),
         };
         }
 

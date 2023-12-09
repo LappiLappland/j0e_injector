@@ -38,11 +38,12 @@ namespace Revive_Injector
 
         public scriptRevive() { }
 
-        public scriptRevive(string FileName, int paramID, bool isPVP, string FileText)
+        public scriptRevive(string FileName, int paramID, bool isPVP, bool isDistance2D, string FileText)
         {
             this.FileName = FileName;
             this.FileText = paramID != -1 ? FileText.Replace("%%%PARAM%%%", $"Param{paramID}") : FileText.Replace("%%%PARAM%%%", "1");
             this.FileText = isPVP ? this.FileText.Replace("%%%ISPVP%%%", "TRUE") : this.FileText.Replace("%%%ISPVP%%%", "FALSE");
+            this.FileText = isDistance2D ? this.FileText.Replace("%%%DISTANCE_TYPE%%%", "[getPosASL _un, getPosASL _dumy] call j0e_distance") : this.FileText.Replace("%%%DISTANCE_TYPE%%%", "_un Distance _dumy");
         }
 
     }

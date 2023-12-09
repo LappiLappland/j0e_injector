@@ -39,6 +39,7 @@
             this.checkBox2 = new System.Windows.Forms.CheckBox();
             this.checkBox1 = new System.Windows.Forms.CheckBox();
             this.checkBox3 = new System.Windows.Forms.CheckBox();
+            this.checkBox4 = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // comboBoxType
@@ -94,7 +95,7 @@
             // buttonClose
             // 
             this.buttonClose.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.buttonClose.Location = new System.Drawing.Point(3, 142);
+            this.buttonClose.Location = new System.Drawing.Point(3, 158);
             this.buttonClose.Name = "buttonClose";
             this.buttonClose.Size = new System.Drawing.Size(199, 23);
             this.buttonClose.TabIndex = 5;
@@ -132,11 +133,22 @@
             this.checkBox3.Text = "PVP mission";
             this.checkBox3.UseVisualStyleBackColor = true;
             // 
+            // checkBox4
+            // 
+            this.checkBox4.AutoSize = true;
+            this.checkBox4.Location = new System.Drawing.Point(3, 135);
+            this.checkBox4.Name = "checkBox4";
+            this.checkBox4.Size = new System.Drawing.Size(131, 17);
+            this.checkBox4.TabIndex = 9;
+            this.checkBox4.Text = "Revive distance in 2D";
+            this.checkBox4.UseVisualStyleBackColor = true;
+            // 
             // FormSettings
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(207, 170);
+            this.ClientSize = new System.Drawing.Size(207, 186);
+            this.Controls.Add(this.checkBox4);
             this.Controls.Add(this.checkBox3);
             this.Controls.Add(this.checkBox2);
             this.Controls.Add(this.checkBox1);
@@ -170,5 +182,6 @@
         private System.Windows.Forms.CheckBox checkBox2;
         private System.Windows.Forms.CheckBox checkBox1;
         private System.Windows.Forms.CheckBox checkBox3;
+        private System.Windows.Forms.CheckBox checkBox4;
     }
 }

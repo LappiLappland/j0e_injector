@@ -89,6 +89,10 @@ namespace Revive_Injector
         /// </summary>
         public static bool DEBUG_ISPVP = true;
         /// <summary>
+        /// Sets if revive distance should be calculated in 3D or 2D
+        /// </summary>
+        public static bool DEBUG_ISDISTANCE2D = true;
+        /// <summary>
         /// Encoding used by OFP files
         /// </summary>
         public static Encoding ANSI = Encoding.GetEncoding("Windows-1250");

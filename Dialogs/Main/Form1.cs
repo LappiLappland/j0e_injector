@@ -14,6 +14,7 @@ namespace WindowsForms_revive
         public static bool st_multithread = false;
         public static bool st_brackets = true;
         public static bool st_isPVP = false;
+        public static bool st_isDistance2D = true;
         public static int st_type = 1;
 
         public Form1()
@@ -32,6 +33,7 @@ namespace WindowsForms_revive
             st_multithread = Properties.Settings.Default.STG_multhithread;
             st_brackets = Properties.Settings.Default.STG_brackets;
             st_isPVP = Properties.Settings.Default.STG_isPVP;
+            st_isDistance2D = Properties.Settings.Default.STG_isDistance2D;
             st_type = Properties.Settings.Default.STG_type;
 
             ToolTip toolTip = new ToolTip();
@@ -89,6 +91,7 @@ namespace WindowsForms_revive
             pohja.DEBUG_REWRITE = (pohja.REWRITE_TYPE)(st_type + 1);
             pohja.DEBUG_DELETE_ANY_BRACKETS = st_brackets;
             pohja.DEBUG_ISPVP = st_isPVP;
+            pohja.DEBUG_ISDISTANCE2D = st_isDistance2D;
             pohja.FinalLog = "";
 
             pohja.CONVERSION_RESULT status;

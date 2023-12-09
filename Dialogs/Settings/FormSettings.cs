@@ -21,7 +21,7 @@ namespace WindowsForms_revive
 
             openFileDialog1.Filter = "PBO Manager Console|pboc.exe";
 
-            //checkBox4.Checked = Form1.st_semi;
+            checkBox4.Checked = Form1.st_isDistance2D;
             checkBox3.Checked = Form1.st_isPVP;
             checkBox2.Checked = Form1.st_brackets;
             checkBox1.Checked = Form1.st_multithread;
@@ -43,6 +43,7 @@ namespace WindowsForms_revive
             toolTip.SetToolTip(this.checkBox1, "Speeds up conversion, but only if there is a lot of missions to convert.\nOtherwise, it will be slowed down.");
             toolTip.SetToolTip(this.checkBox2, "Delete first brackets from original mission name.\nExample: [PvE-15][ABC]Assault.Eden will be turned into [Revg-15][ABC]Assault.Eden");
             toolTip.SetToolTip(this.checkBox3, "In case you want PVP mission with revives.\nPlayers from different teams can't:\n - Revive each other\n - Spectate each other\n - See markers of each other\n - See death messages about each other\n - Game Over is disabled");
+            toolTip.SetToolTip(this.checkBox4, "Distance will be calculated in 2D space, ignoring difference in height between reviver and body. This might be helpful if body gets stuck in the air.");
             toolTip.SetToolTip(this.buttonClose, "Accept and save changes.");
 
 
@@ -96,7 +97,7 @@ namespace WindowsForms_revive
             Properties.Settings.Default.STG_multhithread = checkBox1.Checked;
             Properties.Settings.Default.STG_brackets = checkBox2.Checked;
             Properties.Settings.Default.STG_isPVP = checkBox3.Checked;
-            //Properties.Settings.Default.STG_semi = checkBox4.Checked;
+            Properties.Settings.Default.STG_isDistance2D = checkBox4.Checked;
             Properties.Settings.Default.STG_type = comboBoxType.SelectedIndex;
             Properties.Settings.Default.Save();
 
@@ -104,7 +105,7 @@ namespace WindowsForms_revive
             Form1.st_multithread = checkBox1.Checked;
             Form1.st_brackets = checkBox2.Checked;
             Form1.st_isPVP = checkBox3.Checked;
-            //Form1.st_semi = checkBox4.Checked;
+            Form1.st_isDistance2D = checkBox4.Checked;
             Form1.st_type = comboBoxType.SelectedIndex;
         }
     }
